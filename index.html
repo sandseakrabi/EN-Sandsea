@@ -108,10 +108,7 @@ textarea.inp{resize:none;line-height:1.5}
     <div class="login-wrap">
       <div class="login-logo">Sand Sea Resort</div>
       <div class="login-sub">ระบบแจ้งซ่อม EN System</div>
-      <div class="demo-note">
-        🖥️ <strong>Demo Mode</strong> — ข้อมูลเก็บใน Browser (localStorage)<br>
-        รหัสผ่านเริ่มต้นทุก account: <strong>1234</strong>
-      </div>
+
       <div class="card">
         <div class="form-group">
           <label class="lbl">รหัสพนักงาน</label>
@@ -324,86 +321,45 @@ textarea.inp{resize:none;line-height:1.5}
 
 <script>
 // ================================================================
-// LOCAL STORAGE DATABASE
+// GOOGLE APPS SCRIPT BRIDGE
 // ================================================================
-var DB_USERS   = 'en_users';
-var DB_TICKETS = 'en_tickets';
-var DB_LOGS    = 'en_logs';
-var SS_KEY     = 'en_session';
+// ทุก call ไปหา Code.gs ผ่าน google.script.run
+// session เก็บฝั่ง browser (sessionStorage) เท่านั้น ไม่มี localStorage demo
 
-function dbGet(key) {
-  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; }
-}
-function dbSet(key, val) {
-  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
-}
+var SS_KEY = 'en_session';
 
-// ── Seed default users if none exist ──
-function initDB() {
-  if (dbGet(DB_USERS)) return;
-  var users = [
-    {empId:'SS001', name:'สมชาย ใจดี',    department:'แผนกต้อนรับ', role:'staff',    password:'1234'},
-    {empId:'SS002', name:'สมหญิง มีสุข',  department:'แผนก HK',     role:'staff',    password:'1234'},
-    {empId:'EN001', name:'วิชัย ช่างเก่ง', department:'Engineering', role:'tech',     password:'1234'},
-    {empId:'EN002', name:'ประสิทธิ์ ซ่อมดี',department:'Engineering',role:'tech',     password:'1234'},
-    {empId:'IT001', name:'ธีรพล ไอที',     department:'IT',          role:'it_tech',  password:'1234'},
-    {empId:'IT002', name:'นวพล ดูแลระบบ',  department:'IT',          role:'it_admin', password:'1234'},
-    {empId:'AD001', name:'มานิตย์ หัวหน้า',department:'Engineering', role:'admin',    password:'1234'},
-    {empId:'HK001', name:'พรทิพย์ หัวหน้า HK',department:'HK',      role:'HK_admin', password:'1234'}
-  ];
-  dbSet(DB_USERS, users);
-  dbSet(DB_TICKETS, []);
-  dbSet(DB_LOGS, []);
-}
+// ── Session ──
+function saveSession(u) { try { sessionStorage.setItem(SS_KEY, JSON.stringify(u)); } catch(e){} }
+function loadSession()  { try { var r=sessionStorage.getItem(SS_KEY); return r?JSON.parse(r):null; } catch(e){ return null; } }
+function clearSession() { try { sessionStorage.removeItem(SS_KEY); } catch(e){} }
 
-// ── User helpers ──
-function findUser(empId) {
-  var users = dbGet(DB_USERS) || [];
-  return users.find(function(u){ return u.empId.toLowerCase() === empId.toLowerCase(); }) || null;
-}
-function saveUser(user) {
-  var users = dbGet(DB_USERS) || [];
-  var idx = users.findIndex(function(u){ return u.empId === user.empId; });
-  if (idx >= 0) users[idx] = user; else users.push(user);
-  dbSet(DB_USERS, users);
-}
-
-// ── Ticket helpers ──
-function getTickets() { return dbGet(DB_TICKETS) || []; }
-function saveTickets(arr) { dbSet(DB_TICKETS, arr); }
-function getTicketById(id) { return getTickets().find(function(t){ return t.TicketID === id; }) || null; }
-function saveTicket(t) {
-  var arr = getTickets();
-  var idx = arr.findIndex(function(x){ return x.TicketID === t.TicketID; });
-  if (idx >= 0) arr[idx] = t; else arr.push(t);
-  saveTickets(arr);
-}
-function genTicketId() {
-  var d = new Date();
-  var prefix = 'TK' + String(d.getFullYear()).slice(2) +
-    String(d.getMonth()+1).padStart(2,'0') +
-    String(d.getDate()).padStart(2,'0');
-  var existing = getTickets().filter(function(t){ return t.TicketID.startsWith(prefix); });
-  return prefix + String(existing.length + 1).padStart(3,'0');
-}
-
-// ── Log helpers ──
-function getLogs() { return dbGet(DB_LOGS) || []; }
-function addLog(ticketId, empId, note) {
-  var logs = getLogs();
-  logs.push({ ticketId:ticketId, empId:empId, note:note, timestamp:new Date().toISOString() });
-  dbSet(DB_LOGS, logs);
-}
-function getTicketLogs(ticketId) {
-  return getLogs().filter(function(l){ return l.ticketId === ticketId; });
-}
-
-// ── SLA minutes by type ──
+// ── SLA minutes by type (client-side ใช้สำหรับแสดงผลเท่านั้น) ──
 var SLA_MAP = {
-  'ไฟฟ้า / แสงสว่าง':120,'ประปา / น้ำ':120,'แอร์ / ระบายอากาศ':180,
-  'ประตู / หน้าต่าง / กุญแจ':60,'เฟอร์นิเจอร์ / ของในห้อง':240,
-  'Wifi / อุปกรณ์ IT':60,'สระว่ายน้ำ':240,'TV / โทรศัพท์':120,'อื่นๆ':180
+  'ไฟฟ้า / แสงสว่าง':240,'ประปา / น้ำ':240,'แอร์ / ระบายอากาศ':240,
+  'ประตู / หน้าต่าง / กุญแจ':480,'เฟอร์นิเจอร์ / ของในห้อง':480,
+  'Wifi / อุปกรณ์ IT':120,'สระว่ายน้ำ':480,'TV / โทรศัพท์':240,'อื่นๆ':480
 };
+
+// ── GAS helper: call function แล้ว handle error ──
+function gasCall(fnName, args, onSuccess, onFail) {
+  var runner = google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.success === false) {
+        toast('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+        if (onFail) onFail(result);
+      } else {
+        if (onSuccess) onSuccess(result);
+      }
+    })
+    .withFailureHandler(function(err) {
+      toast('❌ ไม่สามารถเชื่อมต่อ server ได้');
+      console.error(fnName, err);
+      if (onFail) onFail(err);
+    });
+  runner[fnName].apply(runner, args || []);
+}
+
+function initDB() { /* ไม่ใช้ใน GAS mode */ }
 
 // ================================================================
 // STATE
@@ -462,16 +418,27 @@ function doLogin() {
   var shift = document.getElementById('inp-shift').value;
   if (!empId || !pw) { toast('กรุณากรอกข้อมูลให้ครบ'); return; }
 
-  var user = findUser(empId);
-  if (!user)            { toast('ไม่พบรหัสพนักงานนี้'); return; }
-  if (user.password !== pw) { toast('รหัสผ่านไม่ถูกต้อง'); return; }
+  var btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
 
-  // อนุญาตให้เลือก role ได้อิสระในโหมด demo
-  CU = { empId:user.empId, name:user.name, department:user.department,
-         role:role, shift:(role==='tech'||role==='it_tech')?shift:"",
-         shiftStart: new Date().toISOString() };
-  saveSession(CU);
-  afterLogin();
+  google.script.run
+    .withSuccessHandler(function(result) {
+      btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+      if (!result || !result.success) {
+        toast('❌ ' + (result ? result.message : 'เกิดข้อผิดพลาด'));
+        return;
+      }
+      CU = result.user;
+      CU.shiftStart = new Date().toISOString();
+      saveSession(CU);
+      afterLogin();
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+      toast('❌ ไม่สามารถเชื่อมต่อ server ได้');
+      console.error(err);
+    })
+    .login(empId, pw, shift, role);
 }
 
 function afterLogin() {
@@ -486,6 +453,8 @@ function afterLogin() {
       d.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
     showScreen('admin');
     loadAdminData();
+    // start shift expiry check every 5 min
+    autoTimer = setInterval(checkShiftExpiryFromServer, 300000);
 
   } else {
     var shiftLabels = {shift_06:'กะเช้า 06:00–16:00',shift_08:'กะสาย 08:00–18:00',
@@ -496,8 +465,21 @@ function afterLogin() {
       CU.name + '&nbsp;<span class="shift-chip">⏰ ' + (shiftLabels[CU.shift]||CU.shift) + '</span>';
     showScreen('tech-main');
     loadTechTickets('open');
-    autoTimer = setInterval(function(){ loadTechTickets(techTab); }, 30000);
+    autoTimer = setInterval(function(){ loadTechTickets(techTab); checkShiftExpiryFromServer(); }, 300000);
   }
+}
+
+function checkShiftExpiryFromServer() {
+  if (!CU) return;
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r && r.expired) {
+        clearInterval(autoTimer);
+        document.getElementById('shift-warning').style.display = 'flex';
+      }
+    })
+    .withFailureHandler(function(){})
+    .checkShiftExpiry(JSON.stringify(CU));
 }
 
 function doLogout() {
@@ -541,40 +523,30 @@ function submitTicket() {
   var btn = document.getElementById('btn-submit');
   btn.disabled = true; btn.textContent = 'กำลังส่ง...';
 
-  var ticketId = genTicketId();
-  var now = new Date();
-  var slaMin = SLA_MAP[selJobType] || 180;
-  var slaDue = new Date(now.getTime() + slaMin * 60000).toISOString();
-
-  // เก็บรูปเป็น dataURL (เก็บใน ticket)
-  var imgUrls = photoDataURLs.filter(Boolean).join(',');
-
-  var ticket = {
-    TicketID: ticketId,
-    Status: 'open',
-    JobType: selJobType,
-    Location: loc,
-    Detail: detail,
-    Department: CU.department,
-    ReporterName: CU.name,
-    ReporterEmpId: CU.empId,
-    TechName: '',
-    TechEmpId: '',
-    CreatedAt: now.toISOString(),
-    SLADue: slaDue,
-    ClosedAt: '',
-    CloseSummary: '',
-    DurationMin: '',
-    ImageUrls: imgUrls,
-    CloseImageUrls: ''
+  var data = {
+    jobType:   selJobType,
+    location:  loc,
+    detail:    detail,
+    imageUrls: [] // รูปภาพ: ถ้าต้องการอัปโหลด Drive ให้เรียก uploadImageToDrive ก่อน
   };
-  saveTicket(ticket);
-  addLog(ticketId, CU.empId, 'สร้างใบงานแจ้งซ่อม — ' + selJobType + ' ที่ ' + loc);
 
-  toast('ส่งงานสำเร็จ — ' + ticketId);
-  btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม';
-  resetReportForm();
-  gotoStaffTrack();
+  google.script.run
+    .withSuccessHandler(function(result) {
+      btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม';
+      if (!result || !result.success) {
+        toast('❌ ' + (result ? result.message : 'เกิดข้อผิดพลาด'));
+        return;
+      }
+      toast('✅ ส่งงานสำเร็จ — ' + result.ticketId);
+      resetReportForm();
+      gotoStaffTrack();
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม';
+      toast('❌ ไม่สามารถส่งงานได้');
+      console.error(err);
+    })
+    .createTicket(JSON.stringify(CU), data);
 }
 
 function resetReportForm() {
@@ -601,13 +573,18 @@ function gotoStaffTrack() {
 
 function loadStaffTickets() {
   var el = document.getElementById('staff-track-content');
-  var tickets = getTickets().filter(function(t){ return t.ReporterEmpId === CU.empId; })
-    .sort(function(a,b){ return new Date(b.CreatedAt)-new Date(a.CreatedAt); });
-  if (!tickets.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>ยังไม่มีงานที่แจ้ง</div></div>';
-    return;
-  }
-  el.innerHTML = '<div class="cmax">' + tickets.map(function(t){ return ticketCard(t,'staff'); }).join('') + '</div>';
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>กำลังโหลด...</div>';
+  google.script.run
+    .withSuccessHandler(function(result) {
+      var tickets = (result && result.tickets) ? result.tickets : [];
+      if (!tickets.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>ยังไม่มีงานที่แจ้ง</div></div>';
+        return;
+      }
+      el.innerHTML = '<div class="cmax">' + tickets.map(function(t){ return ticketCard(t,'staff'); }).join('') + '</div>';
+    })
+    .withFailureHandler(function(){ el.innerHTML='<div class="empty">โหลดข้อมูลไม่ได้</div>'; })
+    .getTickets(JSON.stringify(CU), 'all');
 }
 
 // ================================================================
@@ -616,33 +593,29 @@ function loadStaffTickets() {
 function loadTechTickets(status) {
   techTab = status;
   var el = document.getElementById('tech-content');
-  var isIT = CU && CU.role === 'it_tech';
-  var all = getTickets().sort(function(a,b){ return new Date(b.CreatedAt)-new Date(a.CreatedAt); });
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>กำลังโหลด...</div>';
 
-  var tickets;
-  if (status === 'on_hold') {
-    tickets = all.filter(function(t){ return t.Status==='on_hold'||t.Status==='oo_closed'; });
-  } else {
-    tickets = all.filter(function(t){ return t.Status === status; });
-  }
+  google.script.run
+    .withSuccessHandler(function(result) {
+      var tickets = (result && result.tickets) ? result.tickets : [];
+      // badge open
+      var hasOpen = tickets.some(function(t){ return t.Status==='open'; });
+      document.getElementById('badge-open').style.display = hasOpen ? '' : 'none';
 
-  // IT tech เห็นเฉพาะงาน IT + งานทั่วไปที่ยังไม่มีช่างรับ
-  if (isIT) {
-    tickets = tickets.filter(function(t){
-      return t.JobType==='Wifi / อุปกรณ์ IT' ||
-        (t.Status==='open' && !t.TechEmpId) ||
-        t.TechEmpId === CU.empId;
-    });
-  }
-
-  var hasOpen = getTickets().some(function(t){ return t.Status==='open'; });
-  document.getElementById('badge-open').style.display = hasOpen ? '' : 'none';
-
-  if (!tickets.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div>ไม่มีงานในหมวดนี้</div></div>';
-    return;
-  }
-  el.innerHTML = '<div class="cmax">' + tickets.map(function(t){ return ticketCard(t, CU.role); }).join('') + '</div>';
+      var filtered;
+      if (status === 'on_hold') {
+        filtered = tickets.filter(function(t){ return t.Status==='on_hold'||t.Status==='oo_closed'; });
+      } else {
+        filtered = tickets.filter(function(t){ return t.Status===status; });
+      }
+      if (!filtered.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div>ไม่มีงานในหมวดนี้</div></div>';
+        return;
+      }
+      el.innerHTML = '<div class="cmax">' + filtered.map(function(t){ return ticketCard(t, CU.role); }).join('') + '</div>';
+    })
+    .withFailureHandler(function(){ el.innerHTML='<div class="empty">โหลดข้อมูลไม่ได้</div>'; })
+    .getTickets(JSON.stringify(CU), 'all');
 }
 
 function switchTechTab(tab, status) {
@@ -709,15 +682,14 @@ function ticketCard(t, role) {
 // ACCEPT TICKET
 // ================================================================
 function acceptTicket(ticketId) {
-  var t = getTicketById(ticketId);
-  if (!t) { toast('ไม่พบใบงาน'); return; }
-  t.Status    = 'in_progress';
-  t.TechName  = CU.name;
-  t.TechEmpId = CU.empId;
-  saveTicket(t);
-  addLog(ticketId, CU.empId, 'รับงานแล้ว — เริ่มดำเนินการ');
-  toast('รับงานสำเร็จ');
-  openDetail(ticketId);
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (!result || !result.success) { toast('❌ ' + (result?result.message:'error')); return; }
+      toast('✅ รับงานสำเร็จ');
+      openDetail(ticketId);
+    })
+    .withFailureHandler(function(){ toast('❌ ไม่สามารถรับงานได้'); })
+    .acceptTicket(JSON.stringify(CU), ticketId);
 }
 
 // ================================================================
@@ -726,10 +698,20 @@ function acceptTicket(ticketId) {
 function openDetail(ticketId) {
   showScreen('detail');
   document.getElementById('detail-id').textContent = ticketId;
-  var t    = getTicketById(ticketId);
-  var logs = getTicketLogs(ticketId);
-  if (!t) { document.getElementById('detail-content').innerHTML='<p style="padding:16px;color:#dc2626">ไม่พบใบงาน</p>'; return; }
-  renderDetail(t, logs);
+  document.getElementById('detail-content').innerHTML = '<div class="loading"><div class="spinner"></div>กำลังโหลด...</div>';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (!result || !result.ticket) {
+        document.getElementById('detail-content').innerHTML = '<p style="padding:16px;color:#dc2626">ไม่พบใบงาน</p>';
+        return;
+      }
+      renderDetail(result.ticket, result.logs || []);
+    })
+    .withFailureHandler(function(){
+      document.getElementById('detail-content').innerHTML = '<p style="padding:16px;color:#dc2626">โหลดข้อมูลไม่ได้</p>';
+    })
+    .getTicketDetail(JSON.stringify(CU), ticketId);
 }
 
 function renderDetail(t, logs) {
@@ -738,10 +720,13 @@ function renderDetail(t, logs) {
   document.getElementById('detail-status').textContent = statusNames[t.Status]||'';
 
   var tlHtml = logs.map(function(l){
-    var ts = new Date(l.timestamp).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'});
+    // รองรับทั้ง format จาก GAS (Timestamp/EmpID/Note) และ format เดิม (timestamp/empId/note)
+    var ts = new Date(l.Timestamp||l.timestamp).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'});
+    var note = l.Note || l.note || '';
+    var who  = l.EmpID || l.empId || '';
     return '<div class="tl-item"><div class="tl-dot done"></div>' +
-      '<div class="tl-text">'+l.note+'</div>' +
-      '<div class="tl-time">'+ts+' — '+l.empId+'</div></div>';
+      '<div class="tl-text">'+note+'</div>' +
+      '<div class="tl-time">'+ts+' — '+who+'</div></div>';
   }).join('');
 
   var isAdminRole = CU && ['admin','HK_admin','it_admin'].includes(CU.role);
@@ -854,13 +839,14 @@ function setPStatus(ticketId, st) {
 function saveProgress(ticketId) {
   var note = document.getElementById('inp-progress').value.trim();
   if (!note) { toast('กรุณากรอกบันทึก'); return; }
-  var t = getTicketById(ticketId);
-  if (!t) return;
-  if (_pStatus) t.Status = _pStatus;
-  saveTicket(t);
-  addLog(ticketId, CU.empId, note + (_pStatus?' [สถานะ: '+_pStatus+']':''));
-  toast('บันทึกสำเร็จ');
-  openDetail(ticketId);
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success){ toast('❌ '+(r?r.message:'error')); return; }
+      toast('✅ บันทึกสำเร็จ');
+      openDetail(ticketId);
+    })
+    .withFailureHandler(function(){ toast('❌ บันทึกไม่ได้'); })
+    .updateProgress(JSON.stringify(CU), ticketId, _pStatus, note);
 }
 
 function handleClosePhoto(input, idx) {
@@ -880,51 +866,61 @@ function handleClosePhoto(input, idx) {
 function closeTicketAction(ticketId) {
   var summary = document.getElementById('inp-close').value.trim();
   if (!summary) { toast('กรุณากรอกสรุปการแก้ไข'); return; }
-  var t = getTicketById(ticketId);
-  if (!t) return;
+  var btn = document.getElementById('btn-close-ticket');
+  btn.disabled = true; btn.textContent = 'กำลังปิดงาน...';
 
-  var now = new Date();
-  var dur = Math.round((now - new Date(t.CreatedAt)) / 60000);
-  t.Status       = 'done';
-  t.CloseSummary = summary;
-  t.ClosedAt     = now.toISOString();
-  t.DurationMin  = dur;
-  t.CloseImageUrls = _closeDataURLs.filter(Boolean).join(',');
-  saveTicket(t);
-  addLog(ticketId, CU.empId, 'ปิดงานเสร็จสิ้น — ' + summary);
-  toast('ปิดงานสำเร็จ — ใช้เวลา ' + dur + ' นาที');
-  showScreen('tech-main');
-  loadTechTickets('open');
+  google.script.run
+    .withSuccessHandler(function(r) {
+      btn.disabled = false; btn.textContent = '✅ ปิดงาน';
+      if (!r||!r.success){ toast('❌ '+(r?r.message:'error')); return; }
+      toast('✅ ปิดงานสำเร็จ');
+      showScreen('tech-main');
+      loadTechTickets('open');
+    })
+    .withFailureHandler(function(){
+      btn.disabled = false; btn.textContent = '✅ ปิดงาน';
+      toast('❌ ปิดงานไม่ได้');
+    })
+    .closeTicket(JSON.stringify(CU), ticketId, summary, []);
 }
 
 function reopenTicket(ticketId) {
   if (!confirm('ยืนยันเปิดใบงานนี้ใหม่?')) return;
-  var t = getTicketById(ticketId);
-  t.Status = 'in_progress';
-  saveTicket(t);
-  addLog(ticketId, CU.empId, 'เปิดใบงานใหม่อีกครั้ง');
-  toast('เปิดใบงานใหม่แล้ว');
-  openDetail(ticketId);
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success){ toast('❌ '+(r?r.message:'error')); return; }
+      toast('✅ เปิดใบงานใหม่แล้ว');
+      openDetail(ticketId);
+    })
+    .withFailureHandler(function(){ toast('❌ เปิดใบงานไม่ได้'); })
+    .reopenTicket(JSON.stringify(CU), ticketId);
 }
 
 function setAdminStatus(ticketId, status) {
   var labels = {on_hold:'พักใบงาน',oo_closed:'แจ้งปิด OO'};
   if (!confirm('ยืนยันเปลี่ยนสถานะเป็น: '+labels[status]+'?')) return;
-  var t = getTicketById(ticketId);
-  t.Status = status;
-  saveTicket(t);
-  addLog(ticketId, CU.empId, 'เปลี่ยนสถานะเป็น ' + labels[status]);
-  toast('เปลี่ยนสถานะแล้ว');
-  openDetail(ticketId);
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success){ toast('❌ '+(r?r.message:'error')); return; }
+      toast('✅ เปลี่ยนสถานะแล้ว');
+      openDetail(ticketId);
+    })
+    .withFailureHandler(function(){ toast('❌ เปลี่ยนสถานะไม่ได้'); })
+    .setAdminStatus(JSON.stringify(CU), ticketId, status, '');
 }
 
 function submitAdminComment(ticketId) {
   var note = document.getElementById('inp-admin-comment').value.trim();
   if (!note) { toast('กรุณากรอกข้อความ'); return; }
-  addLog(ticketId, CU.empId, '[Admin] ' + note);
-  toast('บันทึกคอมเม้นต์แล้ว');
-  document.getElementById('inp-admin-comment').value = '';
-  openDetail(ticketId);
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (!r||!r.success){ toast('❌ '+(r?r.message:'error')); return; }
+      toast('✅ บันทึกคอมเม้นต์แล้ว');
+      document.getElementById('inp-admin-comment').value = '';
+      openDetail(ticketId);
+    })
+    .withFailureHandler(function(){ toast('❌ บันทึกไม่ได้'); })
+    .adminComment(JSON.stringify(CU), ticketId, note);
 }
 
 // ================================================================
@@ -947,30 +943,40 @@ function clearAdminFilter() {
 }
 
 function loadAdminData() {
-  var all = getTickets().sort(function(a,b){ return new Date(b.CreatedAt)-new Date(a.CreatedAt); });
+  var el = document.getElementById('admin-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>กำลังโหลด...</div>';
 
-  // populate filter dropdowns
-  var techSel = document.getElementById('filter-tech');
-  if (techSel) {
-    var techs = [...new Set(all.map(function(t){ return t.TechName; }).filter(Boolean))];
-    techSel.innerHTML = '<option value="">ทุกคน</option>' + techs.map(function(n){ return '<option>'+n+'</option>'; }).join('');
-  }
+  google.script.run
+    .withSuccessHandler(function(result) {
+      var tickets = ((result && result.tickets) ? result.tickets : []).sort(function(a,b){ return new Date(b.CreatedAt)-new Date(a.CreatedAt); });
 
-  var from = adminFilter.from ? new Date(adminFilter.from+'T00:00:00') : new Date(2020,0,1);
-  var to   = adminFilter.to   ? new Date(adminFilter.to+'T23:59:59')   : new Date(2099,11,31);
+      // populate tech dropdown
+      var techSel = document.getElementById('filter-tech');
+      if (techSel) {
+        var techs = [];
+        tickets.forEach(function(t){ if(t.TechName && techs.indexOf(t.TechName)<0) techs.push(t.TechName); });
+        techSel.innerHTML = '<option value="">ทุกคน</option>' + techs.map(function(n){ return '<option>'+n+'</option>'; }).join('');
+      }
 
-  var tickets = all.filter(function(t){
-    var d = new Date(t.CreatedAt);
-    if (d < from || d > to) return false;
-    if (adminFilter.tech && t.TechName !== adminFilter.tech) return false;
-    if (adminFilter.type && t.JobType !== adminFilter.type)  return false;
-    return true;
-  });
-
-  renderAdminDash(tickets);
+      var from = adminFilter.from ? new Date(adminFilter.from+'T00:00:00') : new Date(2020,0,1);
+      var to   = adminFilter.to   ? new Date(adminFilter.to+'T23:59:59')   : new Date(2099,11,31);
+      var filtered = tickets.filter(function(t){
+        var d = new Date(t.CreatedAt);
+        if (d < from || d > to) return false;
+        if (adminFilter.tech && t.TechName !== adminFilter.tech) return false;
+        if (adminFilter.type && t.JobType !== adminFilter.type)  return false;
+        return true;
+      });
+      renderAdminDash(filtered);
+    })
+    .withFailureHandler(function(){
+      el.innerHTML = '<div class="empty">โหลดข้อมูลไม่ได้</div>';
+    })
+    .getTickets(JSON.stringify(CU), 'all');
 }
 
 function renderAdminDash(tickets) {
+  _lastAdminTickets = tickets; // cache for modal use
   var el = document.getElementById('admin-content');
   var total   = tickets.length;
   var open    = tickets.filter(function(t){ return t.Status==='open'; }).length;
@@ -1026,10 +1032,12 @@ function renderAdminDash(tickets) {
     '</table></div></div>';
 }
 
+var _lastAdminTickets = [];
+
 function adminViewTickets(status) {
   var labels = {open:'รอรับงาน',in_progress:'กำลังทำ',on_hold:'พัก / ปิด OO'};
   document.getElementById('modal-title').textContent = 'งาน: '+(labels[status]||status);
-  var tickets = getTickets().filter(function(t){
+  var tickets = _lastAdminTickets.filter(function(t){
     if (status==='on_hold') return t.Status==='on_hold'||t.Status==='oo_closed';
     return t.Status===status;
   });
@@ -1055,7 +1063,7 @@ function adminOpenTicket(el) { closeAdminModal(); openDetail(el.getAttribute('da
 // EXPORT CSV
 // ================================================================
 function doExport() {
-  var tickets = getTickets();
+  var tickets = _lastAdminTickets || [];
   if (!tickets.length) { toast('ไม่มีข้อมูล'); return; }
   var header = ['TicketID','Status','JobType','Location','Detail','Department','ReporterName','TechName','CreatedAt','ClosedAt','DurationMin','CloseSummary'];
   var rows = tickets.map(function(t){
@@ -1091,12 +1099,22 @@ function doChangePassword() {
   if (!oldPw||!newPw||!cfm) { toast('กรุณากรอกข้อมูลให้ครบ'); return; }
   if (newPw!==cfm) { toast('รหัสผ่านใหม่ไม่ตรงกัน'); return; }
   if (newPw.length<4) { toast('รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร'); return; }
-  var user = findUser(CU.empId);
-  if (!user || user.password !== oldPw) { toast('รหัสผ่านเดิมไม่ถูกต้อง'); return; }
-  user.password = newPw;
-  saveUser(user);
-  toast('เปลี่ยนรหัสผ่านสำเร็จ');
-  closeChangePw();
+
+  var btn = document.getElementById('btn-cpw-submit');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+  google.script.run
+    .withSuccessHandler(function(r) {
+      btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่านใหม่';
+      if (!r||!r.success){ toast('❌ '+(r?r.message:'error')); return; }
+      toast('✅ เปลี่ยนรหัสผ่านสำเร็จ');
+      closeChangePw();
+    })
+    .withFailureHandler(function(){
+      btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่านใหม่';
+      toast('❌ เปลี่ยนรหัสผ่านไม่ได้');
+    })
+    .changePassword(JSON.stringify(CU), oldPw, newPw);
 }
 
 // ================================================================
