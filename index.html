@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -982,7 +983,7 @@ textarea.inp { resize: none; line-height: 1.6; }
 // GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
 // ================================================================
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwp9mn6nHI5S5uJHN9MFyzL7BiwNHrBLMUtVxKAAxgenlf48Th-sTCDyBCZ-MeHMuwdDg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbwildh07-1dwOCUDTf-1R6SgA-y4wdxhFkb0VnT6jSfVgi2gCLJngacraFC8NSvcU_j9A/exec';
 var SS_KEY  = 'en_session';
 
 // ── Session ──
@@ -1170,24 +1171,64 @@ function submitTicket() {
   if (!detail) { toast('กรุณากรอกรายละเอียดปัญหา'); return; }
 
   var btn = document.getElementById('btn-submit');
-  btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+  btn.disabled = true; btn.textContent = 'กำลังอัปโหลดรูป...';
 
-  var data = {
-    jobType:   selJobType,
-    location:  loc,
-    detail:    detail,
-    imageUrls: []
-  };
+  var filesToUpload = photoFiles.filter(Boolean);
 
-  gasCall('createTicket', {userJson: JSON.stringify(CU), data: data},
-    function(result) {
-      btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม';
-      toast('✅ ส่งงานสำเร็จ — ' + result.ticketId);
-      resetReportForm();
-      gotoStaffTrack();
-    },
-    function() { btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม'; }
-  );
+  uploadFilesSequentially(filesToUpload, 'photo-', function(uploadedUrls) {
+    btn.textContent = 'กำลังส่ง...';
+    var data = {
+      jobType:   selJobType,
+      location:  loc,
+      detail:    detail,
+      imageUrls: uploadedUrls
+    };
+    gasCall('createTicket', {userJson: JSON.stringify(CU), data: data},
+      function(result) {
+        btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม';
+        toast('✅ ส่งงานสำเร็จ — ' + result.ticketId);
+        resetReportForm();
+        gotoStaffTrack();
+      },
+      function() { btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม'; }
+    );
+  }, function() {
+    btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม';
+    toast('❌ อัปโหลดรูปไม่สำเร็จ');
+  });
+}
+
+/**
+ * อัปโหลดไฟล์ทีละไฟล์ผ่าน doPost ?action=uploadImageToDrive
+ * filePrefix ใช้แยกรูปแจ้งซ่อม (photo-) กับรูปปิดงาน (close-)
+ */
+function uploadFilesSequentially(files, filePrefix, onSuccess, onError) {
+  var urls = [];
+  var idx = 0;
+  function next() {
+    if (idx >= files.length) { onSuccess(urls); return; }
+    var file = files[idx];
+    if (!file) { idx++; next(); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      // dataUrl = "data:image/jpeg;base64,XXXXXX"
+      var parts    = dataUrl.split(',');
+      var mimeType = parts[0].replace('data:','').replace(';base64','');
+      var base64   = parts[1];
+      var fileName = filePrefix + Date.now() + '-' + idx + '.' + (file.name.split('.').pop() || 'jpg');
+      gasCall('uploadImageToDrive', {base64Data: base64, fileName: fileName, mimeType: mimeType},
+        function(result) {
+          if (result && result.url) urls.push(result.url);
+          idx++; next();
+        },
+        function() { onError(); }
+      );
+    };
+    reader.readAsDataURL(file);
+  }
+  if (files.length === 0) { onSuccess([]); return; }
+  next();
 }
 
 function resetReportForm() {
@@ -1493,17 +1534,25 @@ function closeTicketAction(ticketId) {
   var summary = document.getElementById('inp-close').value.trim();
   if (!summary) { toast('กรุณากรอกสรุปการแก้ไข'); return; }
   var btn = document.getElementById('btn-close-ticket');
-  btn.disabled = true; btn.textContent = 'กำลังปิดงาน...';
+  btn.disabled = true; btn.textContent = 'กำลังอัปโหลดรูป...';
 
-  gasCall('closeTicket', {userJson: JSON.stringify(CU), ticketId: ticketId, summary: summary, imageUrls: []},
-    function() {
-      btn.disabled = false; btn.textContent = '✅ ปิดงาน';
-      toast('✅ ปิดงานสำเร็จ');
-      showScreen('tech-main');
-      loadTechTickets('open');
-    },
-    function() { btn.disabled = false; btn.textContent = '✅ ปิดงาน'; toast('❌ ปิดงานไม่ได้'); }
-  );
+  var filesToUpload = (_closeFiles || []).filter(Boolean);
+
+  uploadFilesSequentially(filesToUpload, 'close-', function(uploadedUrls) {
+    btn.textContent = 'กำลังปิดงาน...';
+    gasCall('closeTicket', {userJson: JSON.stringify(CU), ticketId: ticketId, summary: summary, imageUrls: uploadedUrls},
+      function() {
+        btn.disabled = false; btn.textContent = '✅ ปิดงาน';
+        toast('✅ ปิดงานสำเร็จ');
+        showScreen('tech-main');
+        loadTechTickets('open');
+      },
+      function() { btn.disabled = false; btn.textContent = '✅ ปิดงาน'; toast('❌ ปิดงานไม่ได้'); }
+    );
+  }, function() {
+    btn.disabled = false; btn.textContent = '✅ ปิดงาน';
+    toast('❌ อัปโหลดรูปไม่สำเร็จ');
+  });
 }
 
 function reopenTicket(ticketId) {
