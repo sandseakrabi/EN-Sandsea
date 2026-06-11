@@ -1092,13 +1092,13 @@ textarea.inp { resize: none; line-height: 1.6; }
 // GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
 // ================================================================
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwLMqr647YIfaUnM9iRihid-Z3WBpC0VEH2hcUH4MeCg3Iqm6OSKwM_Q6Cao8OQ2yCnSw/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyPcH7Ak0z3FFqswcmMf5FNXBrZmhLqHWgzgrlQfgZsJUUjkhgiCQgkB1Qx1zPiIiyA9g/exec';
 var SS_KEY  = 'en_session';
 
 // ── Session ──
-function saveSession(u) { try { sessionStorage.setItem(SS_KEY, JSON.stringify(u)); } catch(e){} }
-function loadSession()  { try { var r=sessionStorage.getItem(SS_KEY); return r?JSON.parse(r):null; } catch(e){ return null; } }
-function clearSession() { try { sessionStorage.removeItem(SS_KEY); } catch(e){} }
+function saveSession(u) { try { localStorage.setItem(SS_KEY, JSON.stringify(u)); } catch(e){} }
+function loadSession()  { try { var r=localStorage.getItem(SS_KEY); return r?JSON.parse(r):null; } catch(e){ return null; } }
+function clearSession() { try { localStorage.removeItem(SS_KEY); } catch(e){} }
 
 // ── SLA minutes by type (client-side แสดงผลเท่านั้น) ──
 var SLA_MAP = {
@@ -1157,7 +1157,6 @@ var autoTimer  = null;
 var photoFiles = [null, null, null];
 var photoDataURLs = [null, null, null];
 var selJobType = "";
-var adminFilter = { from:"", to:"", dept:"", tech:"", type:"" };
 var _closeFiles = [null, null];
 var _closeDataURLs = [null, null];
 var _pStatus = null;
@@ -1777,7 +1776,8 @@ function renderAdminDash(tickets) {
       '<div class="bar-cnt">'+e[1]+'</div></div>';
   }).join('');
 
-  var rowsHtml = tickets.slice(0,100).map(function(t){
+  // แสดงสูงสุด 200 รายการ (เพิ่มจาก 100); ควรพิจารณา pagination ในอนาคต
+  var rowsHtml = tickets.slice(0,200).map(function(t){
     var ts = t.CreatedAt ? new Date(t.CreatedAt).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}) : '';
     return '<tr style="cursor:pointer" onclick="openDetail(\''+t.TicketID+'\')">'+
       '<td>'+t.TicketID+'</td><td>'+t.Location+'</td>' +
@@ -1804,7 +1804,7 @@ function renderAdminDash(tickets) {
       '<div class="stat-card"><div class="stat-num" style="color:#16a34a">'+slaPct+'%</div><div class="stat-lbl">ทำใน SLA</div></div>' +
     '</div>' +
     (byTypeHtml?'<div class="sec">ประเภทงาน</div><div class="card">'+byTypeHtml+'</div>':'') +
-    '<div class="sec">รายการงาน ('+tickets.length+' รายการ)</div>' +
+    '<div class="sec">รายการงาน (แสดง '+Math.min(tickets.length,200)+' จาก '+tickets.length+' รายการ)</div>' +
     '<div class="card-flat"><div class="tbl-wrap"><table class="tbl">' +
       '<thead><tr><th>Ticket</th><th>ตำแหน่ง</th><th>สถานะ</th><th>ช่าง</th><th style="text-align:right">เวลา</th></tr></thead>' +
       '<tbody>'+(rowsHtml||'<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">ไม่มีข้อมูล</td></tr>')+'</tbody>' +
