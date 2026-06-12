@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -1092,8 +1093,12 @@ textarea.inp { resize: none; line-height: 1.6; }
 // GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
 // ================================================================
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyPcH7Ak0z3FFqswcmMf5FNXBrZmhLqHWgzgrlQfgZsJUUjkhgiCQgkB1Qx1zPiIiyA9g/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbwLMqr647YIfaUnM9iRihid-Z3WBpC0VEH2hcUH4MeCg3Iqm6OSKwM_Q6Cao8OQ2yCnSw/exec';
 var SS_KEY  = 'en_session';
+
+// ── VAPID Public Key (ต้องตรงกับที่ใส่ใน Script Properties ของ GAS) ──
+// สร้าง key ได้ที่ https://vapidkeys.com/ แล้วใส่ค่า publicKey ตรงนี้
+var VAPID_PUBLIC_KEY = 'BKh91pvXBUUqpM3io-433wGUj64WmttfybxmIWJyj2rzJ8BSGnVOdaQiCOTyljDXBlrZaHlQE3zEI8JYnqXn3r4';
 
 // ── Session ──
 function saveSession(u) { try { localStorage.setItem(SS_KEY, JSON.stringify(u)); } catch(e){} }
@@ -1142,6 +1147,93 @@ function gasCall(fn, params, onSuccess, onFail) {
     console.error('[gasCall] ' + fn + ' error:', err);
     toast('❌ ' + fn + ': ' + (err.message || 'เชื่อมต่อไม่ได้'));
     if (onFail) onFail(err);
+  });
+}
+
+// ================================================================
+// WEB PUSH — Subscribe / Unsubscribe
+// ================================================================
+
+/**
+ * แปลง VAPID public key จาก base64url → Uint8Array
+ * จำเป็นสำหรับ PushManager.subscribe()
+ */
+function urlBase64ToUint8Array(base64String) {
+  var padding = '='.repeat((4 - base64String.length % 4) % 4);
+  var base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  var raw     = window.atob(base64);
+  var arr     = new Uint8Array(raw.length);
+  for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
+/**
+ * ขอ permission และ subscribe push
+ * เรียกหลัง login สำเร็จสำหรับ role ที่ต้องการรับแจ้งเตือน (tech, it_tech, admin, it_admin, HK_admin)
+ */
+function subscribePush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') return;
+
+  navigator.serviceWorker.ready.then(function(reg) {
+    // ตรวจว่า subscribe แล้วหรือยัง
+    reg.pushManager.getSubscription().then(function(existing) {
+      if (existing) {
+        // มี subscription แล้ว → บันทึกลง GAS ทุกครั้งที่ login (endpoint อาจเปลี่ยน)
+        saveSubscriptionToGAS(existing);
+        return;
+      }
+      // ขอ permission ใหม่
+      Notification.requestPermission().then(function(perm) {
+        if (perm !== 'granted') return;
+        reg.pushManager.subscribe({
+          userVisibleOnly:      true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        }).then(function(sub) {
+          saveSubscriptionToGAS(sub);
+        }).catch(function(err) {
+          console.warn('[Push] subscribe failed:', err);
+        });
+      });
+    });
+  });
+}
+
+function saveSubscriptionToGAS(sub) {
+  if (!CU) return;
+  gasCall('savePushSubscription', {
+    userJson:         JSON.stringify(CU),
+    subscriptionJson: JSON.stringify(sub)
+  }, null, null);
+}
+
+function unsubscribePush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  navigator.serviceWorker.ready.then(function(reg) {
+    reg.pushManager.getSubscription().then(function(sub) {
+      if (sub) sub.unsubscribe();
+    });
+  });
+  if (CU) {
+    gasCall('removePushSubscription', { userJson: JSON.stringify(CU) }, null, null);
+  }
+}
+
+/**
+ * รับ message จาก service worker เมื่อกดแจ้งเตือน
+ * → เปิดหน้า detail ของ ticket นั้นทันที
+ */
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'OPEN_TICKET' && e.data.ticketId) {
+      // ถ้ายังไม่ได้ login → session จะ restore ก่อนใน init แล้ว openDetail
+      if (CU) {
+        openDetail(e.data.ticketId);
+      } else {
+        // เก็บ ticketId ไว้เปิดหลัง restore session
+        window._pendingTicket = e.data.ticketId;
+      }
+    }
   });
 }
 
@@ -1225,7 +1317,7 @@ function afterLogin() {
       d.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
     showScreen('admin');
     loadAdminData();
-    // start shift expiry check every 5 min
+    subscribePush();   // admin รับแจ้งเตือนด้วย
     autoTimer = setInterval(checkShiftExpiryFromServer, 300000);
 
   } else {
@@ -1237,7 +1329,15 @@ function afterLogin() {
       CU.name + '&nbsp;<span class="shift-chip">⏰ ' + (shiftLabels[CU.shift]||CU.shift) + '</span>';
     showScreen('tech-main');
     loadTechTickets('open');
+    subscribePush();   // ช่างรับแจ้งเตือนงานใหม่
     autoTimer = setInterval(function(){ loadTechTickets(techTab); checkShiftExpiryFromServer(); }, 300000);
+  }
+
+  // ถ้ามี pending ticket (กดแจ้งเตือนตอน app ปิดอยู่) → เปิดทันที
+  if (window._pendingTicket) {
+    var tid = window._pendingTicket;
+    window._pendingTicket = null;
+    setTimeout(function(){ openDetail(tid); }, 500);
   }
 }
 
@@ -1253,6 +1353,7 @@ function checkShiftExpiryFromServer() {
 
 function doLogout() {
   clearInterval(autoTimer);
+  unsubscribePush();
   CU = null; clearSession();
   document.getElementById('shift-warning').style.display='none';
   showScreen('login');
@@ -1937,6 +2038,11 @@ window.addEventListener('load', function() {
 // ================================================================
 initDB();
 (function init() {
+  // ตรวจ URL param ?ticket=XXXX (กดแจ้งเตือนตอน app ปิด)
+  var urlParams = new URLSearchParams(window.location.search);
+  var ticketParam = urlParams.get('ticket');
+  if (ticketParam) window._pendingTicket = ticketParam;
+
   var saved = loadSession();
   if (saved) { CU = saved; afterLogin(); }
 })();
