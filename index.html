@@ -1230,25 +1230,34 @@ function showTicketNotification(t) {
   var body  = (t.JobType || '') + ' — ' + (t.Location || '') +
               '\n' + (t.Detail || '').substring(0, 60);
 
-  try {
-    var n = new Notification(title, {
-      body:     body,
-      icon:     './icon-EN.png',
-      badge:    './icon-EN.png',
-      tag:      t.TicketID,
-      renotify: true,
-      vibrate:  [200, 100, 200]
+  // ใช้ Service Worker showNotification แทน new Notification()
+  // เพราะ SW notification ทำงานได้แม้ app อยู่ background บน Android
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.ready.then(function(reg) {
+      reg.showNotification(title, {
+        body:     body,
+        icon:     './icon-EN.png',
+        badge:    './icon-EN.png',
+        tag:      t.TicketID,
+        renotify: true,
+        vibrate:  [200, 100, 200],
+        data:     { ticketId: t.TicketID }
+      });
     });
-
-    n.onclick = function() {
-      window.focus();
-      n.close();
-      openDetail(t.TicketID);
-    };
-
-    setTimeout(function(){ n.close(); }, 8000);
-  } catch(e) {
-    console.warn('[Notify] error:', e);
+  } else {
+    // fallback สำหรับ desktop / browser ที่ไม่มี SW
+    try {
+      var n = new Notification(title, {
+        body:     body,
+        icon:     './icon-EN.png',
+        tag:      t.TicketID,
+        renotify: true
+      });
+      n.onclick = function() { window.focus(); n.close(); openDetail(t.TicketID); };
+      setTimeout(function(){ n.close(); }, 8000);
+    } catch(e) {
+      console.warn('[Notify] error:', e);
+    }
   }
 }
 
