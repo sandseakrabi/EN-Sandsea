@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -1159,87 +1158,92 @@ function gasCall(fn, params, onSuccess, onFail) {
 // เช็คงานใหม่ทุก 30 วินาที แจ้งเตือนผ่าน Notification API โดยตรง
 // ================================================================
 
-var _notifyTimer    = null;
-var _notifiedIds    = {};   // ticketId ที่แจ้งแล้ว — ไม่แจ้งซ้ำ
-var _lastPollTime   = null;
+var _notifyTimer  = null;
+var _seenIds      = null;   // null = ยังไม่ได้ init, {} = init แล้ว
+var _pollReady    = false;  // true หลัง poll ครั้งแรกเสร็จ
 
 /**
  * เริ่ม polling หลัง login
- * เรียกสำหรับ tech, it_tech, admin, it_admin, HK_admin
  */
 function startNotifyPolling() {
   if (_notifyTimer) clearInterval(_notifyTimer);
-  _lastPollTime = new Date();
+  _seenIds   = null;
+  _pollReady = false;
 
   // ขอ permission ก่อน
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
 
-  // poll ทันทีครั้งแรก แล้วทุก 30 วินาที
+  // poll ครั้งแรกทันที (เพื่อ init seenIds) แล้วทุก 30 วินาที
+  pollNewTickets();
   _notifyTimer = setInterval(pollNewTickets, 30000);
 }
 
 function stopNotifyPolling() {
   if (_notifyTimer) { clearInterval(_notifyTimer); _notifyTimer = null; }
+  _seenIds   = null;
+  _pollReady = false;
 }
 
 function pollNewTickets() {
   if (!CU) return;
-  // เฉพาะ role ที่ต้องรับแจ้งเตือน
   if (!['tech','it_tech','admin','it_admin','HK_admin'].includes(CU.role)) return;
-  if (Notification.permission !== 'granted') return;
 
   gasCall('getTickets', {userJson: JSON.stringify(CU), filterStatus: 'open'},
     function(result) {
       var tickets = (result && result.tickets) ? result.tickets : [];
-      var now     = new Date();
+      var currentIds = {};
+      tickets.forEach(function(t){ currentIds[t.TicketID] = t; });
 
-      tickets.forEach(function(t) {
-        // แจ้งเฉพาะใบงานที่สร้างหลัง lastPollTime และยังไม่เคยแจ้ง
-        var created = t.CreatedAt ? new Date(t.CreatedAt) : null;
-        if (!created) return;
-        if (_notifiedIds[t.TicketID]) return;
-        // ถ้าใบงานสร้างก่อน login ให้ข้าม (ครั้งแรก mark ทั้งหมดว่าเคยเห็นแล้ว)
-        if (_lastPollTime && created < _lastPollTime) {
-          _notifiedIds[t.TicketID] = true;
-          return;
+      if (_seenIds === null) {
+        // ครั้งแรก — บันทึก ticketId ที่มีอยู่แล้วทั้งหมด ไม่แจ้งเตือน
+        _seenIds   = currentIds;
+        _pollReady = true;
+        console.log('[Poll] init — เห็น ' + Object.keys(_seenIds).length + ' ใบงาน');
+        return;
+      }
+
+      // ครั้งถัดไป — หา ticketId ใหม่ที่ยังไม่เคยเห็น
+      Object.keys(currentIds).forEach(function(id) {
+        if (!_seenIds[id]) {
+          // ใบงานใหม่!
+          console.log('[Poll] งานใหม่: ' + id);
+          _seenIds[id] = currentIds[id];
+          if (Notification.permission === 'granted') {
+            showTicketNotification(currentIds[id]);
+          }
         }
-
-        // แจ้งเตือน!
-        _notifiedIds[t.TicketID] = true;
-        showTicketNotification(t);
       });
-
-      _lastPollTime = now;
     }
   );
 }
 
 function showTicketNotification(t) {
-  if (Notification.permission !== 'granted') return;
-
   var title = '🔧 งานใหม่เข้ามา';
-  var body  = (t.JobType || '') + ' — ' + (t.Location || '') + '\n' + (t.Detail || '').substring(0, 60);
+  var body  = (t.JobType || '') + ' — ' + (t.Location || '') +
+              '\n' + (t.Detail || '').substring(0, 60);
 
-  var n = new Notification(title, {
-    body:    body,
-    icon:    './icon-EN.png',
-    badge:   './icon-EN.png',
-    tag:     t.TicketID,
-    renotify: true,
-    vibrate: [200, 100, 200]
-  });
+  try {
+    var n = new Notification(title, {
+      body:     body,
+      icon:     './icon-EN.png',
+      badge:    './icon-EN.png',
+      tag:      t.TicketID,
+      renotify: true,
+      vibrate:  [200, 100, 200]
+    });
 
-  // กดแจ้งเตือน → เปิด app โฟกัสแล้วไปหน้า detail
-  n.onclick = function() {
-    window.focus();
-    n.close();
-    openDetail(t.TicketID);
-  };
+    n.onclick = function() {
+      window.focus();
+      n.close();
+      openDetail(t.TicketID);
+    };
 
-  // ปิดอัตโนมัติหลัง 8 วินาที
-  setTimeout(function(){ n.close(); }, 8000);
+    setTimeout(function(){ n.close(); }, 8000);
+  } catch(e) {
+    console.warn('[Notify] error:', e);
+  }
 }
 
 function initDB() { /* ไม่ใช้ใน GAS mode */ }
