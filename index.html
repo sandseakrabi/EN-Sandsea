@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -1201,13 +1202,15 @@ function pollNewTickets() {
         _seenIds   = currentIds;
         _pollReady = true;
         console.log('[Poll] init — เห็น ' + Object.keys(_seenIds).length + ' ใบงาน');
+        toast('🔔 เปิดการแจ้งเตือนแล้ว (' + Object.keys(_seenIds).length + ' ใบ)');
         return;
       }
 
       // ครั้งถัดไป — หา ticketId ใหม่ที่ยังไม่เคยเห็น
+      var newCount = 0;
       Object.keys(currentIds).forEach(function(id) {
         if (!_seenIds[id]) {
-          // ใบงานใหม่!
+          newCount++;
           console.log('[Poll] งานใหม่: ' + id);
           _seenIds[id] = currentIds[id];
           if (Notification.permission === 'granted') {
@@ -1215,6 +1218,9 @@ function pollNewTickets() {
           }
         }
       });
+      if (newCount === 0) {
+        console.log('[Poll] ไม่มีงานใหม่ — ' + new Date().toLocaleTimeString());
+      }
     }
   );
 }
