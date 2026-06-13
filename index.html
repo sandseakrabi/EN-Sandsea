@@ -1092,7 +1092,7 @@ textarea.inp { resize: none; line-height: 1.6; }
 // GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
 // ================================================================
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwUC4wlmx9HYIFp_eYDRh-Zz5E6If0VUf_PxJJ2BLix9uPx4UYqMYsUAEZeqm8ltLgu/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyNqXw2l5cPPauA3dWlWPPaOdYAdP1J1igCSRiwjehC6PWQneNK_JsAh1jc1Ytv8AADxg/exec';
 var SS_KEY  = 'en_session';
 
 // ── VAPID Public Key (ต้องตรงกับที่ใส่ใน Script Properties ของ GAS) ──
@@ -1332,7 +1332,7 @@ function afterLogin() {
   if (CU.role === 'staff') {
     document.getElementById('staff-name-lbl').textContent = CU.name + ' — ' + CU.department;
     showScreen('staff-report');
-    startStaffPolling();   // staff รับแจ้งเตือนเมื่อสถานะใบงานเปลี่ยน
+    startStaffPolling();
 
   } else if (['admin','it_admin','HK_admin'].includes(CU.role)) {
     var d = new Date();
@@ -1386,11 +1386,9 @@ function doLogout() {
 
 // ================================================================
 // STAFF NOTIFICATION — Poll สถานะใบงานของตัวเอง
-// แจ้งเมื่อ status เปลี่ยน (ช่างรับ/เสร็จ/รออะไหล่/ปิด)
 // ================================================================
-
 var _staffPollTimer  = null;
-var _staffSeenStatus = {};   // { ticketId: status } ที่เห็นล่าสุด
+var _staffSeenStatus = {};
 var _staffPollReady  = false;
 
 var STATUS_LABEL = {
@@ -1405,11 +1403,9 @@ function startStaffPolling() {
   if (_staffPollTimer) clearInterval(_staffPollTimer);
   _staffSeenStatus = {};
   _staffPollReady  = false;
-
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
-
   pollStaffTickets();
   _staffPollTimer = setInterval(pollStaffTickets, 30000);
 }
@@ -1422,67 +1418,59 @@ function stopStaffPolling() {
 
 function pollStaffTickets() {
   if (!CU || CU.role !== 'staff') return;
-
   gasCall('getTickets', {userJson: JSON.stringify(CU), filterStatus: 'all'},
     function(result) {
       var tickets = (result && result.tickets) ? result.tickets : [];
-
       if (!_staffPollReady) {
-        // ครั้งแรก — บันทึก status ปัจจุบันทั้งหมด ไม่แจ้งเตือน
         tickets.forEach(function(t){ _staffSeenStatus[t.TicketID] = t.Status; });
         _staffPollReady = true;
         console.log('[StaffPoll] init — ' + tickets.length + ' ใบ');
         toast('🔔 เปิดการแจ้งเตือนใบงานแล้ว');
         return;
       }
-
-      // ครั้งถัดไป — เช็ค status ที่เปลี่ยน
       tickets.forEach(function(t) {
         var prev = _staffSeenStatus[t.TicketID];
-        if (prev === undefined) {
-          // ใบงานใหม่ที่เพิ่งสร้าง (staff เปิดเองก็ track ไว้)
-          _staffSeenStatus[t.TicketID] = t.Status;
-          return;
-        }
+        if (prev === undefined) { _staffSeenStatus[t.TicketID] = t.Status; return; }
         if (prev !== t.Status) {
-          // status เปลี่ยน!
           console.log('[StaffPoll] ' + t.TicketID + ': ' + prev + ' → ' + t.Status);
           _staffSeenStatus[t.TicketID] = t.Status;
-          showStaffNotification(t, prev);
+          showStaffNotification(t);
         }
       });
     }
   );
 }
 
-function showStaffNotification(t, prevStatus) {
+function showStaffNotification(t) {
   if (Notification.permission !== 'granted') return;
-
   var label    = STATUS_LABEL[t.Status] || t.Status;
   var techName = t.TechName ? ' โดย ' + t.TechName : '';
-  var title    = 'อัปเดตใบงาน — ' + (t.JobType || '');
-  var body     = label + techName + '\n' + (t.Location || '') + ' — ' + t.TicketID;
+  var title    = 'อัปเดตใบงาน';
+  var body     = label + techName + '\n' + (t.JobType||'') + ' — ' + (t.Location||'');
+  var tag      = t.TicketID + '-' + t.Status + '-' + Date.now();
+
+  var opts = {
+    body: body, icon: './icon-EN.png', badge: './icon-EN.png',
+    tag: tag, renotify: true, silent: false,
+    vibrate: [300, 100, 300], data: { ticketId: t.TicketID }
+  };
 
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
     navigator.serviceWorker.ready.then(function(reg) {
-      reg.showNotification(title, {
-        body:     body,
-        icon:     './icon-EN.png',
-        badge:    './icon-EN.png',
-        tag:      t.TicketID + '-status',
-        renotify: true,
-        vibrate:  [200, 100, 200],
-        data:     { ticketId: t.TicketID }
-      });
+      reg.showNotification(title, opts);
     });
   } else {
     try {
-      var n = new Notification(title, { body: body, icon: './icon-EN.png', tag: t.TicketID + '-status', renotify: true });
+      var n = new Notification(title, opts);
       n.onclick = function(){ window.focus(); n.close(); openDetail(t.TicketID); };
       setTimeout(function(){ n.close(); }, 8000);
     } catch(e) { console.warn('[StaffNotify]', e); }
   }
 }
+
+// ================================================================
+// STAFF — REPORT
+// ================================================================
 function selType(btn) {
   document.querySelectorAll('.type-btn').forEach(function(b){ b.classList.remove('sel'); });
   btn.classList.add('sel');
