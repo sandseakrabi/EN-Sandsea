@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -1092,7 +1093,7 @@ textarea.inp { resize: none; line-height: 1.6; }
 // GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
 // ================================================================
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyNqXw2l5cPPauA3dWlWPPaOdYAdP1J1igCSRiwjehC6PWQneNK_JsAh1jc1Ytv8AADxg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyDhkL20X8il6qk3GjnLcSrg-xqYQ1WX4OPD9kyIJkl5pv18knyEr6dAzA1OFHtm_JKOA/exec';
 var SS_KEY  = 'en_session';
 
 // ── VAPID Public Key (ต้องตรงกับที่ใส่ใน Script Properties ของ GAS) ──
@@ -1227,7 +1228,7 @@ function pollNewTickets() {
 function showTicketNotification(t) {
   var title = '🔧 งานใหม่เข้ามา';
   var body  = (t.JobType || '') + ' — ' + (t.Location || '') +
-              '\n' + (t.Detail || '').substring(0, 60);
+              '\n' + String(t.Detail || '').substring(0, 60);
 
   // ใช้ Service Worker showNotification แทน new Notification()
   // เพราะ SW notification ทำงานได้แม้ app อยู่ background บน Android
@@ -1682,7 +1683,7 @@ function ticketCard(t, role) {
       '<span style="font-size:11px;color:#aaa">'+timeStr+'</span>' +
     '</div>' +
     '<div style="font-size:15px;font-weight:600;margin-bottom:3px">'+t.JobType+' — '+t.Location+'</div>' +
-    '<div style="font-size:12px;color:#888">'+(t.Detail||'').substring(0,60)+((t.Detail&&t.Detail.length>60)?'...':'')+'</div>' +
+    '<div style="font-size:12px;color:#888">'+String(t.Detail||'').substring(0,60)+((t.Detail&&String(t.Detail).length>60)?'...':'')+'</div>' +
     (t.TechName?'<div style="font-size:12px;color:#888;margin-top:2px">ช่าง: '+t.TechName+'</div>':"") +
     slaHtml(t) + actions + '</div>';
 }
@@ -1736,7 +1737,7 @@ function renderDetail(t, logs) {
 
   var imgHtml = '';
   if (t.ImageUrls) {
-    var urls = t.ImageUrls.split(',').filter(Boolean);
+    var urls = String(t.ImageUrls).split(',').filter(Boolean);
     if (urls.length) {
       imgHtml = '<div class="sec">รูปภาพก่อนซ่อม</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
         urls.map(function(u){
@@ -1747,7 +1748,7 @@ function renderDetail(t, logs) {
   }
   var closeImgHtml = '';
   if (t.CloseImageUrls) {
-    var curls = t.CloseImageUrls.split(',').filter(Boolean);
+    var curls = String(t.CloseImageUrls).split(',').filter(Boolean);
     if (curls.length) {
       closeImgHtml = '<div class="sec">รูปภาพหลังซ่อมเสร็จ</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
         curls.map(function(u){
@@ -2038,7 +2039,7 @@ function adminViewTickets(status) {
       return '<div class="card" style="cursor:pointer;margin-bottom:8px" onclick="adminOpenTicket(this)" data-tid="'+t.TicketID+'">' +
         '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+(SL[t.Status]||'')+'<span style="font-size:11px;color:#aaa">'+ts+'</span></div>' +
         '<div style="font-weight:600;font-size:14px">'+t.JobType+' — '+t.Location+'</div>' +
-        '<div style="font-size:12px;color:#888;margin-top:2px">'+(t.Detail||'').substring(0,60)+'</div>' +
+        '<div style="font-size:12px;color:#888;margin-top:2px">'+String(t.Detail||'').substring(0,60)+'</div>' +
         (t.TechName?'<div style="font-size:11px;color:#aaa;margin-top:3px">ช่าง: '+t.TechName+'</div>':'<div style="font-size:11px;color:#dc2626;margin-top:3px">ยังไม่มีช่างรับงาน</div>')+
         '</div>';
     }).join('');
