@@ -864,13 +864,15 @@ textarea.inp { resize: none; line-height: 1.6; }
           </div>
           <div class="form-group" id="grp-shift" style="display:none">
             <label class="lbl">กะที่ทำงานวันนี้</label>
-            <select class="inp" id="inp-shift">
-              <option value="shift_06">กะเช้า (06:00–16:00)</option>
-              <option value="shift_08">กะสาย (08:00–18:00)</option>
-              <option value="shift_10">กะกลางวัน (10:00–20:00)</option>
-              <option value="shift_12">กะบ่าย (12:00–22:00)</option>
-              <option value="shift_21">กะดึก (21:00–07:00)</option>
+            <select class="inp" id="inp-shift" onchange="onShiftChange()">
+              <option value="">— เลือกกะ —</option>
+              <option value="shift_06">06:00 – 16:00</option>
+              <option value="shift_08">08:00 – 18:00</option>
+              <option value="shift_10">10:00 – 20:00</option>
+              <option value="shift_12">12:00 – 22:00</option>
+              <option value="shift_21">21:00 – 07:00</option>
             </select>
+            <div id="shift-time-warn" style="display:none;margin-top:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 12px;font-size:13px;color:#856404;line-height:1.5"></div>
           </div>
           <button class="btn btn-primary btn-block" id="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
           <p style="font-size:12px;color:#aaa;text-align:center;margin-top:14px">ลืมรหัสผ่าน ติดต่อ IT</p>
@@ -1388,11 +1390,82 @@ function toast(msg) {
 }
 
 // ================================================================
-// LOGIN
+// SHIFT CONFIG — เวลาที่อนุญาตให้ลงชื่อเข้างาน (±30 นาที ก่อนกะเริ่ม)
 // ================================================================
+var SHIFT_CONFIG = {
+  shift_06: { label: '06:00 – 16:00', startH: 6,  startM: 0,  allowFrom: [5,  30], allowTo: [7,  0]  },
+  shift_08: { label: '08:00 – 18:00', startH: 8,  startM: 0,  allowFrom: [7,  30], allowTo: [9,  0]  },
+  shift_10: { label: '10:00 – 20:00', startH: 10, startM: 0,  allowFrom: [9,  30], allowTo: [11, 0]  },
+  shift_12: { label: '12:00 – 22:00', startH: 12, startM: 0,  allowFrom: [11, 30], allowTo: [13, 0]  },
+  shift_21: { label: '21:00 – 07:00', startH: 21, startM: 0,  allowFrom: [20, 30], allowTo: [22, 0]  }
+};
+
+/**
+ * แปลงเวลาปัจจุบัน → นาทีนับจากเที่ยงคืน
+ * กะดึก 21:00-07:00 ใช้ช่วง 20:30-22:00 (ไม่ข้ามวัน ง่ายต่อการเปรียบเทียบ)
+ */
+function nowMinutes() {
+  var n = new Date();
+  return n.getHours() * 60 + n.getMinutes();
+}
+
+function shiftAllowedNow(shiftKey) {
+  var cfg = SHIFT_CONFIG[shiftKey];
+  if (!cfg) return { ok: false, reason: 'ไม่พบข้อมูลกะ' };
+  var now = nowMinutes();
+  var from = cfg.allowFrom[0] * 60 + cfg.allowFrom[1];
+  var to   = cfg.allowTo[0]   * 60 + cfg.allowTo[1];
+  if (now >= from && now <= to) return { ok: true };
+  // แสดงเวลาปัจจุบันและช่วงที่อนุญาต
+  var n = new Date();
+  var nowStr  = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  var fromStr = String(cfg.allowFrom[0]).padStart(2,'0') + ':' + String(cfg.allowFrom[1]).padStart(2,'0');
+  var toStr   = String(cfg.allowTo[0]).padStart(2,'0')   + ':' + String(cfg.allowTo[1]).padStart(2,'0');
+  return {
+    ok: false,
+    reason: 'กะ ' + cfg.label + '\nลงชื่อเข้างานได้ช่วง ' + fromStr + ' – ' + toStr +
+            '\nเวลาปัจจุบัน ' + nowStr + ' ยังไม่ถึงเวลา หรือเลยเวลาแล้ว'
+  };
+}
+
 function onRoleChange() {
   var r = document.getElementById('inp-role').value;
-  document.getElementById('grp-shift').style.display = (r==='tech'||r==='it_tech') ? '' : 'none';
+  var show = (r === 'tech' || r === 'it_tech');
+  document.getElementById('grp-shift').style.display = show ? '' : 'none';
+  if (show) {
+    // ล้าง warning เดิม + pre-select กะที่ตรงเวลาปัจจุบัน
+    document.getElementById('shift-time-warn').style.display = 'none';
+    autoSelectShift();
+  }
+}
+
+/** เลือกกะที่ตรงเวลาปัจจุบันให้อัตโนมัติ */
+function autoSelectShift() {
+  var sel = document.getElementById('inp-shift');
+  var keys = Object.keys(SHIFT_CONFIG);
+  for (var i = 0; i < keys.length; i++) {
+    if (shiftAllowedNow(keys[i]).ok) {
+      sel.value = keys[i];
+      document.getElementById('shift-time-warn').style.display = 'none';
+      return;
+    }
+  }
+  // ไม่มีกะที่ตรง → ให้ผู้ใช้เลือกเอง แต่ warning จะแสดงเมื่อเลือก
+  sel.value = '';
+}
+
+/** เรียกเมื่อผู้ใช้เปลี่ยน dropdown กะ */
+function onShiftChange() {
+  var shiftKey = document.getElementById('inp-shift').value;
+  var warnDiv  = document.getElementById('shift-time-warn');
+  if (!shiftKey) { warnDiv.style.display = 'none'; return; }
+  var chk = shiftAllowedNow(shiftKey);
+  if (chk.ok) {
+    warnDiv.style.display = 'none';
+  } else {
+    warnDiv.style.display = 'block';
+    warnDiv.innerHTML = '⚠️ ' + chk.reason.replace(/\n/g, '<br>');
+  }
 }
 
 function doLogin() {
@@ -1401,6 +1474,17 @@ function doLogin() {
   var role  = document.getElementById('inp-role').value;
   var shift = document.getElementById('inp-shift').value;
   if (!empId || !pw) { toast('กรุณากรอกข้อมูลให้ครบ'); return; }
+
+  // ตรวจสอบกะเฉพาะ role ช่าง
+  if (role === 'tech' || role === 'it_tech') {
+    if (!shift) { toast('กรุณาเลือกกะที่ทำงาน'); return; }
+    var chk = shiftAllowedNow(shift);
+    if (!chk.ok) {
+      // แสดง popup modal แจ้งเตือน
+      showShiftErrorPopup(chk.reason);
+      return;
+    }
+  }
 
   var btn = document.getElementById('btn-login');
   btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
@@ -1415,6 +1499,25 @@ function doLogin() {
     },
     function() { btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ'; }
   );
+}
+
+/** Popup modal แจ้งเตือนเวลากะไม่ถูกต้อง */
+function showShiftErrorPopup(reason) {
+  // สร้าง overlay + modal
+  var overlay = document.createElement('div');
+  overlay.id = 'shift-err-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:320px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center">' +
+      '<div style="font-size:48px;margin-bottom:12px">⏰</div>' +
+      '<div style="font-size:17px;font-weight:700;color:#c0392b;margin-bottom:10px">เวลาไม่ตรงกะ</div>' +
+      '<div style="font-size:14px;color:#555;line-height:1.7;margin-bottom:20px">' + reason.replace(/\n/g,'<br>') + '</div>' +
+      '<button onclick="document.getElementById(\'shift-err-overlay\').remove()" ' +
+        'style="background:#333;color:#fff;border:none;border-radius:10px;padding:11px 32px;font-size:15px;font-weight:600;cursor:pointer;width:100%">รับทราบ</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  // กด outside ก็ปิดได้
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
 }
 
 function afterLogin() {
@@ -1434,8 +1537,8 @@ function afterLogin() {
     autoTimer = setInterval(checkShiftExpiryFromServer, 300000);
 
   } else {
-    var shiftLabels = {shift_06:'กะเช้า 06:00–16:00',shift_08:'กะสาย 08:00–18:00',
-      shift_10:'กะกลางวัน 10:00–20:00',shift_12:'กะบ่าย 12:00–22:00',shift_21:'กะดึก 21:00–07:00'};
+    var shiftLabels = {shift_06:'06:00–16:00',shift_08:'08:00–18:00',
+      shift_10:'10:00–20:00',shift_12:'12:00–22:00',shift_21:'21:00–07:00'};
     document.getElementById('tech-title').textContent =
       CU.role==='it_tech' ? 'หน้างาน — ทีม IT' : 'หน้างาน — Engineering';
     document.getElementById('tech-sub').innerHTML =
