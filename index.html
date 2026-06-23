@@ -1012,7 +1012,7 @@ textarea.inp { resize: none; line-height: 1.6; }
       <div class="topbar-sub" id="admin-date"></div>
     </div>
     <div class="topbar-right">
-      <button class="btn btn-sm" id="btn-export" onclick="doExport()">⬇ Export</button>
+      <button class="btn btn-sm" id="btn-export" onclick="doExport()">📥 Export Excel</button>
       <button class="btn btn-sm btn-icon" title="เปลี่ยนรหัสผ่าน" onclick="openChangePw()">🔑</button>
       <button class="btn btn-sm btn-danger" onclick="doLogout()">ออก</button>
     </div>
@@ -1092,7 +1092,7 @@ textarea.inp { resize: none; line-height: 1.6; }
 // GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
 // ================================================================
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyDhkL20X8il6qk3GjnLcSrg-xqYQ1WX4OPD9kyIJkl5pv18knyEr6dAzA1OFHtm_JKOA/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbxsJP6pVho3MRDtL9ax1ArEwrtNrk7UgS6Di1yikpBBDgXSnfHil5W3aHlClvnn2otnuQ/exec';
 var SS_KEY  = 'en_session';
 
 // ── VAPID Public Key (ต้องตรงกับที่ใส่ใน Script Properties ของ GAS) ──
@@ -1821,26 +1821,52 @@ function renderDetail(t, logs) {
   var isAdminRole = CU && ['admin','HK_admin','it_admin'].includes(CU.role);
   var isTech = CU && ['tech','it_tech','it_admin','admin','HK_admin'].includes(CU.role);
 
+  /**
+   * แปลง Google Drive URL ให้เป็น thumbnail ที่แสดงใน <img> ได้จริง
+   * Google บล็อก uc?export=view แล้วสำหรับ embedding — ต้องใช้ thumbnail endpoint แทน
+   * thumbnail URL: https://drive.google.com/thumbnail?id=FILE_ID&sz=w400
+   * view URL (กดดูเต็ม): https://drive.google.com/file/d/FILE_ID/view
+   */
+  function driveThumbUrl(url) {
+    if (!url) return '';
+    var m = url.match(/[?&]id=([^&]+)/) || url.match(/\/d\/([^\/]+)\//);
+    var id = m ? m[1] : null;
+    if (!id) return url; // ไม่ใช่ Drive URL → ใช้ URL เดิม
+    return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w400';
+  }
+  function driveViewUrl(url) {
+    if (!url) return url;
+    var m = url.match(/[?&]id=([^&]+)/) || url.match(/\/d\/([^\/]+)\//);
+    var id = m ? m[1] : null;
+    if (!id) return url;
+    return 'https://drive.google.com/file/d/' + id + '/view';
+  }
+  function imgThumb(url) {
+    var thumb = driveThumbUrl(url);
+    var view  = driveViewUrl(url);
+    return '<a href="'+view+'" target="_blank" rel="noopener" style="display:block;width:80px;height:80px;border-radius:10px;overflow:hidden;border:1px solid #d1d0ca;background:#f0f0f0;position:relative">' +
+      '<img src="'+thumb+'" style="width:100%;height:100%;object-fit:cover" ' +
+        'onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.img-err\').style.display=\'flex\'">' +
+      '<span class="img-err" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:10px;color:#aaa;text-align:center;flex-direction:column;gap:2px">📷<br>กดดูรูป</span>' +
+    '</a>';
+  }
+
   var imgHtml = '';
   if (t.ImageUrls) {
     var urls = String(t.ImageUrls).split(',').filter(Boolean);
     if (urls.length) {
-      imgHtml = '<div class="sec">รูปภาพก่อนซ่อม</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
-        urls.map(function(u){
-          return '<a href="'+u+'" target="_blank" style="display:block;width:80px;height:80px;border-radius:10px;overflow:hidden;border:1px solid #d1d0ca">' +
-            '<img src="'+u+'" style="width:100%;height:100%;object-fit:cover"></a>';
-        }).join('') + '</div>';
+      imgHtml = '<div class="sec">รูปภาพก่อนซ่อม</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
+        urls.map(imgThumb).join('') + '</div>';
     }
   }
   var closeImgHtml = '';
   if (t.CloseImageUrls) {
     var curls = String(t.CloseImageUrls).split(',').filter(Boolean);
     if (curls.length) {
-      closeImgHtml = '<div class="sec">รูปภาพหลังซ่อมเสร็จ</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
-        curls.map(function(u){
-          return '<a href="'+u+'" target="_blank" style="display:block;width:80px;height:80px;border-radius:10px;overflow:hidden;border:1px solid #d1d0ca">' +
-            '<img src="'+u+'" style="width:100%;height:100%;object-fit:cover"></a>';
-        }).join('') + '</div>';
+      closeImgHtml = '<div class="sec">รูปภาพหลังซ่อมเสร็จ</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
+        curls.map(imgThumb).join('') + '</div>';
     }
   }
 
@@ -2136,25 +2162,49 @@ function closeAdminModal() { document.getElementById('admin-ticket-modal').style
 function adminOpenTicket(el) { closeAdminModal(); openDetail(el.getAttribute('data-tid')); }
 
 // ================================================================
-// EXPORT CSV
+// EXPORT EXCEL (xlsx) — เรียก GAS exportTicketsToExcel พร้อม link รูปภาพ
 // ================================================================
 function doExport() {
-  var tickets = _lastAdminTickets || [];
-  if (!tickets.length) { toast('ไม่มีข้อมูล'); return; }
-  var header = ['TicketID','Status','JobType','Location','Detail','Department','ReporterName','TechName','CreatedAt','ClosedAt','DurationMin','CloseSummary'];
-  var rows = tickets.map(function(t){
-    return header.map(function(h){ return '"'+(t[h]||'').toString().replace(/"/g,'""')+'"'; }).join(',');
-  });
-  var csv = '\uFEFF' + header.join(',') + '\n' + rows.join('\n');
-  var blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  var d    = new Date();
-  a.href = url;
-  a.download = 'EN-Report-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'.csv';
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a); URL.revokeObjectURL(url);
-  toast('Export CSV สำเร็จ — '+tickets.length+' รายการ');
+  if (!_lastAdminTickets || !_lastAdminTickets.length) { toast('ไม่มีข้อมูล'); return; }
+
+  // หาช่วงวันที่จาก filter ที่เลือกไว้ (ถ้ามี)
+  var dateFrom = adminFilter.from || '';
+  var dateTo   = adminFilter.to   || '';
+
+  toast('⏳ กำลัง Export Excel...');
+
+  // ปิดปุ่มชั่วคราวเพื่อกัน double-click
+  var btn = document.getElementById('btn-export');
+  if (btn) { btn.disabled = true; btn.textContent = 'กำลัง Export...'; }
+
+  gasCall('exportTicketsToExcel',
+    { userJson: JSON.stringify(CU), dateFrom: dateFrom, dateTo: dateTo },
+    function(result) {
+      if (btn) { btn.disabled = false; btn.textContent = '📥 Export Excel'; }
+      if (!result || !result.base64) { toast('❌ Export ไม่สำเร็จ'); return; }
+
+      // แปลง base64 → Blob → ดาวน์โหลด
+      var binary = atob(result.base64);
+      var bytes  = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      var blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      var d    = new Date();
+      a.href     = url;
+      a.download = 'EN-Report-' + d.getFullYear() +
+                   String(d.getMonth()+1).padStart(2,'0') +
+                   String(d.getDate()).padStart(2,'0') + '.xlsx';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+      toast('✅ Export Excel สำเร็จ — ' + result.count + ' รายการ (มี link รูปภาพ)');
+    },
+    function() {
+      if (btn) { btn.disabled = false; btn.textContent = '📥 Export Excel'; }
+      toast('❌ Export ไม่สำเร็จ');
+    }
+  );
 }
 
 // ================================================================
