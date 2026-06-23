@@ -928,7 +928,7 @@ textarea.inp { resize: none; line-height: 1.6; }
         <label class="lbl">รายละเอียดปัญหา</label>
         <textarea class="inp" id="inp-detail" rows="3" placeholder="อธิบายปัญหาที่พบ..."></textarea>
       </div>
-      <div class="sec">แนบรูปภาพ (ไม่เกิน 3 รูป)</div>
+      <div class="sec">แนบรูปภาพ (ไม่เกิน 5 รูป)</div>
       <div class="photo-row" id="photo-row">
         <label class="photo-slot" id="ps0">
           <span style="font-size:26px">📷</span><span>เพิ่มรูป</span>
@@ -941,6 +941,14 @@ textarea.inp { resize: none; line-height: 1.6; }
         <label class="photo-slot" id="ps2">
           <span style="font-size:26px">📷</span><span>เพิ่มรูป</span>
           <input type="file" accept="image/*" onchange="handlePhoto(this,2)">
+        </label>
+        <label class="photo-slot" id="ps3">
+          <span style="font-size:26px">📷</span><span>เพิ่มรูป</span>
+          <input type="file" accept="image/*" onchange="handlePhoto(this,3)">
+        </label>
+        <label class="photo-slot" id="ps4">
+          <span style="font-size:26px">📷</span><span>เพิ่มรูป</span>
+          <input type="file" accept="image/*" onchange="handlePhoto(this,4)">
         </label>
       </div>
       <div style="height:16px"></div>
@@ -1092,7 +1100,7 @@ textarea.inp { resize: none; line-height: 1.6; }
 // GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
 // ================================================================
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwhErpLp1XAwbfkqX1WfX8m87na2QD9xbSvBIPD4FQwgTqlyrNcEzuLqXm0opCmAdvAPQ/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbw5_96UvjZ-_YKmYMFoXwcGgY5XYsB1pF9jN6QEGh7TqobfW-Brmgv8vzRwJNofkE6X5A/exec';
 var SS_KEY  = 'en_session';
 
 // ── VAPID Public Key (ต้องตรงกับที่ใส่ใน Script Properties ของ GAS) ──
@@ -1350,11 +1358,11 @@ var CU = null;
 var prevScreen = "";
 var techTab    = "open";
 var autoTimer  = null;
-var photoFiles = [null, null, null];
-var photoDataURLs = [null, null, null];
+var photoFiles = [null, null, null, null, null];
+var photoDataURLs = [null, null, null, null, null];
 var selJobType = "";
-var _closeFiles = [null, null];
-var _closeDataURLs = [null, null];
+var _closeFiles = [null, null, null, null, null];
+var _closeDataURLs = [null, null, null, null, null];
 var _pStatus = null;
 
 // ================================================================
@@ -1653,7 +1661,7 @@ function resetReportForm() {
   document.getElementById('inp-location').value = '';
   document.getElementById('inp-detail').value   = '';
   document.getElementById('it-info').style.display = 'none';
-  [0,1,2].forEach(function(i){
+  [0,1,2,3,4].forEach(function(i){
     var slot = document.getElementById('ps'+i);
     var img  = slot.querySelector('img');
     if (img) img.remove();
@@ -1904,10 +1912,13 @@ function renderDetail(t, logs) {
       '<div class="card">' +
         '<div class="form-group"><label class="lbl">สรุปการแก้ไข</label>' +
           '<textarea class="inp" id="inp-close" rows="3" placeholder="อธิบายสิ่งที่แก้ไข..."></textarea></div>' +
-        '<div class="sec">แนบรูปหลังซ่อมเสร็จ (ไม่เกิน 2 รูป)</div>' +
+        '<div class="sec">แนบรูปหลังซ่อมเสร็จ (ไม่เกิน 5 รูป)</div>' +
         '<div class="photo-row" style="margin-bottom:12px">' +
           '<label class="photo-slot" id="cp0"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,0)"></label>' +
           '<label class="photo-slot" id="cp1"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,1)"></label>' +
+          '<label class="photo-slot" id="cp2"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,2)"></label>' +
+          '<label class="photo-slot" id="cp3"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,3)"></label>' +
+          '<label class="photo-slot" id="cp4"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,4)"></label>' +
         '</div>' +
         '<button id="btn-close-ticket" class="btn btn-primary btn-block" onclick="closeTicketAction(\''+t.TicketID+'\')">✅ ปิดงาน</button>' +
       '</div>' +
@@ -1919,8 +1930,8 @@ function renderDetail(t, logs) {
       :'');
 
     _pStatus = t.Status;
-    _closeFiles = [null,null];
-    _closeDataURLs = [null,null];
+    _closeFiles = [null,null,null,null,null];
+    _closeDataURLs = [null,null,null,null,null];
   }
 
   document.getElementById('detail-content').innerHTML =
