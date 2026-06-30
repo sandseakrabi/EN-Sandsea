@@ -1102,7 +1102,7 @@ textarea.inp { resize: none; line-height: 1.6; }
 // GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
 // ================================================================
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbw5_96UvjZ-_YKmYMFoXwcGgY5XYsB1pF9jN6QEGh7TqobfW-Brmgv8vzRwJNofkE6X5A/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbwViAK68tokk2jPOEx5nkSyVuCIVLHVzMfsCRXM12Ea9I3fl58VOTgNWLiFFlFWE2827Q/exec';
 var SS_KEY  = 'en_session';
 
 // ── VAPID Public Key (ต้องตรงกับที่ใส่ใน Script Properties ของ GAS) ──
@@ -1377,6 +1377,20 @@ function showScreen(id) {
   if (el) { el.classList.add('active'); window.scrollTo(0,0); }
 }
 function goBack() {
+  // ── ป้องกันข้อมูลหาย: ถ้ากำลังอยู่หน้ารายละเอียดใบงาน และมีบันทึกความคืบหน้า
+  // ที่พิมพ์ไว้แต่ยังไม่ได้กด "บันทึกความคืบหน้า" ให้บันทึกอัตโนมัติก่อนออกจากหน้า
+  var activeScreen = (document.querySelector('.screen.active')||{}).id || "";
+  var progressEl = activeScreen === 'screen-detail' ? document.getElementById('inp-progress') : null;
+  var pendingNote = progressEl ? progressEl.value.trim() : '';
+  var ticketId = document.getElementById('detail-id') ? document.getElementById('detail-id').textContent : '';
+
+  if (pendingNote && ticketId) {
+    gasCall('updateProgress', {userJson: JSON.stringify(CU), ticketId: ticketId, newStatus: '', comment: pendingNote},
+      function() { toast('✅ บันทึกความคืบหน้าที่ค้างไว้ให้อัตโนมัติแล้ว'); },
+      function() {}
+    );
+  }
+
   if (prevScreen) showScreen(prevScreen.replace('screen-',''));
 }
 
@@ -2092,23 +2106,39 @@ function closeTicketAction(ticketId) {
   var btn = document.getElementById('btn-close-ticket');
   btn.disabled = true; btn.textContent = 'กำลังอัปโหลดรูป...';
 
-  var filesToUpload = (_closeFiles || []).filter(Boolean);
+  // ── สำคัญ: ถ้ามีบันทึกความคืบหน้าที่พิมพ์ไว้แต่ยังไม่ได้กด "บันทึกความคืบหน้า"
+  // ให้บันทึกเก็บไว้ก่อนปิดงาน ป้องกันข้อมูลหายเวลาช่างพิมพ์โน้ตแล้วกดปิดงานเลย
+  var progressEl = document.getElementById('inp-progress');
+  var pendingNote = progressEl ? progressEl.value.trim() : '';
 
-  uploadFilesSequentially(filesToUpload, 'close-', function(uploadedUrls) {
-    btn.textContent = 'กำลังปิดงาน...';
-    gasCall('closeTicket', {userJson: JSON.stringify(CU), ticketId: ticketId, summary: summary, imageUrls: uploadedUrls},
-      function() {
-        btn.disabled = false; btn.textContent = '✅ ปิดงาน';
-        toast('✅ ปิดงานสำเร็จ');
-        showScreen('tech-main');
-        loadTechTickets('open');
-      },
-      function() { btn.disabled = false; btn.textContent = '✅ ปิดงาน'; toast('❌ ปิดงานไม่ได้'); }
+  function proceedWithUploadAndClose() {
+    var filesToUpload = (_closeFiles || []).filter(Boolean);
+
+    uploadFilesSequentially(filesToUpload, 'close-', function(uploadedUrls) {
+      btn.textContent = 'กำลังปิดงาน...';
+      gasCall('closeTicket', {userJson: JSON.stringify(CU), ticketId: ticketId, summary: summary, imageUrls: uploadedUrls},
+        function() {
+          btn.disabled = false; btn.textContent = '✅ ปิดงาน';
+          toast('✅ ปิดงานสำเร็จ');
+          showScreen('tech-main');
+          loadTechTickets('open');
+        },
+        function() { btn.disabled = false; btn.textContent = '✅ ปิดงาน'; toast('❌ ปิดงานไม่ได้'); }
+      );
+    }, function() {
+      btn.disabled = false; btn.textContent = '✅ ปิดงาน';
+      toast('❌ อัปโหลดรูปไม่สำเร็จ');
+    });
+  }
+
+  if (pendingNote) {
+    gasCall('updateProgress', {userJson: JSON.stringify(CU), ticketId: ticketId, newStatus: '', comment: pendingNote},
+      function() { proceedWithUploadAndClose(); },
+      function() { proceedWithUploadAndClose(); } // แม้บันทึก note ไม่สำเร็จ ก็ยังปิดงานต่อ ไม่บล็อกช่าง
     );
-  }, function() {
-    btn.disabled = false; btn.textContent = '✅ ปิดงาน';
-    toast('❌ อัปโหลดรูปไม่สำเร็จ');
-  });
+  } else {
+    proceedWithUploadAndClose();
+  }
 }
 
 function reopenTicket(ticketId) {
