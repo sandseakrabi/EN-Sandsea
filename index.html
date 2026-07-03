@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -1143,7 +1144,14 @@ function gasCall(fn, params, onSuccess, onFail, opts) {
     if (!ct.includes('json')) {
       return r.text().then(function(txt) {
         console.error('[gasCall] ' + fn + ' — non-JSON response:', txt.substring(0, 300));
-        throw new Error('GAS returned non-JSON: ' + txt.substring(0, 100));
+        // สาเหตุที่พบบ่อยที่สุด: Deploy > Web app > "Who has access" ไม่ได้ตั้งเป็น "Anyone"
+        // ทำให้ Google สกัดคำขอไว้ตั้งแต่ก่อนถึง doPost() แล้วส่งหน้า HTML (login/consent หรือหน้าเว็บแอปแบบ bound)
+        // กลับมาแทน — เบราว์เซอร์เลย parse JSON ไม่ได้ และ CORS จะ block ไปด้วยเพราะหน้านั้นไม่มี CORS header
+        var looksLikeAuthWall = /accounts\.google\.com|ServiceLogin|createTemplateFromFile|<html/i.test(txt);
+        var hint = looksLikeAuthWall
+          ? ' (deployment อาจตั้งค่า "Who has access" ไม่ใช่ Anyone หรือ GAS_URL เป็น deployment เก่าที่ไม่ตรงกับเวอร์ชันล่าสุด — ตรวจสอบ Deploy > Manage deployments)'
+          : '';
+        throw new Error('GAS returned non-JSON' + hint + ': ' + txt.substring(0, 100));
       });
     }
     return r.json();
