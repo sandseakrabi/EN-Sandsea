@@ -1,0 +1,2487 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EN System">
+<meta name="theme-color" content="#1a1a1a">
+<title>EN System — Sand Sea Resort</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-EN.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   BASE RESET & VARIABLES
+   ================================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --bg: #F5F4F0;
+  --surface: #ffffff;
+  --border: #e5e3de;
+  --border-light: #f0ede8;
+  --text: #1a1a1a;
+  --text-muted: #888;
+  --text-light: #aaa;
+  --accent: #1a1a1a;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --topbar-h: 56px;
+  --tabs-h: 44px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Sarabun', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+/* ================================================================
+   SCREEN SYSTEM
+   ================================================================ */
+.screen { display: none; min-height: 100vh; min-height: 100dvh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ================================================================
+   TOP BAR — compact on mobile, fuller on desktop
+   ================================================================ */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  padding-top: calc(10px + var(--safe-top));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--shadow-sm);
+  gap: 10px;
+}
+.topbar-left { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.topbar-title { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-right { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+
+/* On desktop: give topbar more breathing room */
+@media (min-width: 768px) {
+  .topbar { padding: 14px 24px; }
+  .topbar-title { font-size: 17px; }
+}
+
+/* ================================================================
+   TABS
+   ================================================================ */
+.tabs {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 40;
+  gap: 0;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  padding: 11px 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 600;
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.tab.active { color: var(--text); border-bottom-color: var(--text); }
+.tab:hover:not(.active) { color: #555; }
+
+/* ================================================================
+   CONTENT AREA
+   ================================================================ */
+.content {
+  padding: 16px;
+  flex: 1;
+  padding-bottom: calc(16px + var(--safe-bottom));
+}
+@media (min-width: 768px) {
+  .content { padding: 24px; }
+}
+
+/* Max-width container — centers content on big screens */
+.cmax {
+  max-width: 600px;
+  margin: 0 auto;
+}
+@media (min-width: 1024px) {
+  .cmax { max-width: 680px; }
+}
+
+/* ================================================================
+   CARDS
+   ================================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.card-flat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+@media (min-width: 768px) {
+  .card { padding: 20px; margin-bottom: 14px; }
+}
+
+/* ================================================================
+   BADGES
+   ================================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+}
+.b-open    { background: #dbeafe; color: #1e40af; }
+.b-inprog  { background: #fef3c7; color: #92400e; }
+.b-wait    { background: #ffedd5; color: #9a3412; }
+.b-done    { background: #dcfce7; color: #166534; }
+.b-it      { background: #ede9fe; color: #4c1d95; }
+
+/* ================================================================
+   BUTTONS
+   ================================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 600;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  -webkit-user-select: none;
+  user-select: none;
+}
+.btn:hover  { background: #f7f5f2; }
+.btn:active { background: #ede9e3; transform: scale(0.97); }
+
+.btn-primary  { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover  { background: #333; }
+.btn-primary:active { background: #444; }
+
+.btn-sm   { padding: 6px 12px; font-size: 12px; }
+.btn-block { width: 100%; padding: 13px; font-size: 15px; }
+.btn-danger { color: #9a3412; border-color: #fed7aa; background: #fff7ed; }
+.btn-danger:hover { background: #ffedd5; }
+
+/* Icon-only button for mobile topbar */
+.btn-icon {
+  padding: 8px;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+/* ================================================================
+   FORMS
+   ================================================================ */
+.form-group { margin-bottom: 16px; }
+.lbl {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #666;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.inp {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'Sarabun', sans-serif;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.inp:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(26,26,26,0.08);
+}
+textarea.inp { resize: none; line-height: 1.6; }
+
+/* ================================================================
+   TYPE SELECTOR GRID — responsive
+   ================================================================ */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+@media (min-width: 480px) {
+  .type-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 768px) {
+  .type-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+.type-btn {
+  padding: 12px 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface);
+  color: #666;
+  font-family: 'Sarabun', sans-serif;
+  line-height: 1.3;
+  transition: all 0.15s;
+  box-shadow: var(--shadow-sm);
+}
+.type-btn:hover { border-color: #999; background: #f7f5f2; }
+.type-btn.sel {
+  border-color: var(--accent);
+  background: #f0ede8;
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(26,26,26,0.12);
+}
+
+/* ================================================================
+   SECTION LABELS
+   ================================================================ */
+.sec {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 0 10px;
+}
+
+/* ================================================================
+   SLA TRACK
+   ================================================================ */
+.sla-track { height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; margin-top: 8px; }
+.sla-fill  { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.sla-ok    { background: #16a34a; }
+.sla-warn  { background: #d97706; }
+.sla-over  { background: #dc2626; }
+.sla-lbl   { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+/* ================================================================
+   TIMELINE
+   ================================================================ */
+.tl { padding-left: 14px; border-left: 2px solid var(--border); }
+.tl-item { position: relative; padding: 0 0 14px 16px; }
+.tl-dot { position: absolute; left: -9px; top: 4px; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid var(--border); }
+.tl-dot.done { background: #16a34a; border-color: #16a34a; }
+.tl-text { font-size: 13px; font-weight: 600; line-height: 1.4; }
+.tl-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ================================================================
+   STATS GRID — adaptive columns
+   ================================================================ */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+@media (min-width: 480px) {
+  .stat-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 12px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.stat-num  { font-size: 26px; font-weight: 700; line-height: 1.1; }
+.stat-lbl  { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+/* ================================================================
+   PHOTO UPLOAD
+   ================================================================ */
+.photo-row  { display: flex; gap: 8px; flex-wrap: wrap; }
+.photo-slot {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--text-muted);
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s, background 0.15s;
+}
+.photo-slot:hover { border-color: #999; background: #f7f5f2; }
+.photo-slot input { display: none; }
+.photo-slot img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; border-radius: 8px; }
+
+/* ================================================================
+   LOGIN
+   ================================================================ */
+.login-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 32px 20px;
+  padding-bottom: calc(32px + var(--safe-bottom));
+  max-width: 420px;
+  margin: 0 auto;
+  width: 100%;
+}
+.login-logo { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.login-sub  { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; }
+
+/* Login brand strip at top */
+.login-brand {
+  background: var(--accent);
+  padding: 20px 20px 0;
+  padding-top: calc(20px + var(--safe-top));
+}
+.login-brand-inner {
+  max-width: 420px;
+  margin: 0 auto;
+  padding-bottom: 20px;
+}
+.login-brand .login-logo { color: #fff; margin-bottom: 2px; }
+.login-brand .login-sub  { color: rgba(255,255,255,0.65); margin-bottom: 0; }
+
+/* ================================================================
+   INSTALL BANNER (PWA prompt)
+   ================================================================ */
+#pwa-banner {
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 16px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  position: sticky;
+  bottom: 0;
+  z-index: 60;
+  padding-bottom: calc(10px + var(--safe-bottom));
+}
+#pwa-banner span { flex: 1; }
+#pwa-banner .btn { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); color: #fff; }
+#pwa-banner .btn:hover { background: rgba(255,255,255,0.3); }
+#pwa-banner-close { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 18px; padding: 4px; line-height: 1; }
+
+/* ================================================================
+   LOADING / EMPTY
+   ================================================================ */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 14px;
+  flex-direction: column;
+  gap: 12px;
+}
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { text-align: center; padding: 52px 20px; color: var(--text-light); }
+.empty-icon { font-size: 44px; margin-bottom: 10px; }
+
+/* ================================================================
+   TOAST
+   ================================================================ */
+#toast {
+  position: fixed;
+  bottom: calc(24px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 13px;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: 88vw;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  font-weight: 600;
+}
+
+/* ================================================================
+   SHIFT CHIP & NOTIFICATION DOT
+   ================================================================ */
+.shift-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #ede9fe;
+  color: #4c1d95;
+}
+.ndot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dc2626;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ================================================================
+   BAR CHART
+   ================================================================ */
+.bar-row  { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.bar-lbl  { font-size: 12px; color: #666; width: 140px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s; }
+.bar-cnt   { font-size: 12px; color: var(--text-muted); min-width: 24px; text-align: right; }
+
+/* ================================================================
+   TABLE — horizontal scroll on small screens
+   ================================================================ */
+.tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 400px; }
+.tbl th {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.tbl td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: #fafaf8; }
+
+/* ================================================================
+   INFO / DEMO BOXES
+   ================================================================ */
+.info-box {
+  background: #dbeafe;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #1e40af;
+  margin-top: 12px;
+  line-height: 1.5;
+  border: 1px solid #bfdbfe;
+}
+.demo-note {
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #713f12;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* ================================================================
+   MODALS
+   ================================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 150;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  backdrop-filter: blur(2px);
+}
+@media (min-width: 540px) {
+  .modal-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+}
+.modal-box {
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-height: 90dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: var(--safe-bottom);
+}
+@media (min-width: 540px) {
+  .modal-box {
+    border-radius: 16px;
+    max-width: 420px;
+    max-height: 85dvh;
+    padding-bottom: 0;
+  }
+}
+.modal-header {
+  background: var(--accent);
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.modal-header span { color: #fff; font-weight: 700; font-size: 15px; }
+.modal-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.modal-close:hover { color: #fff; }
+.modal-body { padding: 20px; }
+
+/* Admin ticket modal — wider */
+#admin-ticket-modal .modal-box {
+  max-width: 580px;
+}
+
+/* ================================================================
+   SHIFT WARNING
+   ================================================================ */
+#shift-warning {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+#shift-warning-box {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+/* ================================================================
+   DESKTOP LAYOUT ENHANCEMENTS
+   ================================================================ */
+@media (min-width: 768px) {
+  /* Side padding for admin filter area */
+  .admin-filter-wrap {
+    padding: 16px 24px;
+  }
+
+  /* Wider type grid with labels more visible */
+  .type-btn { font-size: 13px; }
+
+  /* ── Login page — true two-column desktop layout ── */
+  #screen-login {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #111 0%, #2a2a2a 60%, #1a1a1a 100%);
+  }
+  #screen-login > div {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    align-items: stretch;
+  }
+
+  /* Left branding panel */
+  .login-brand-panel {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 56px;
+    color: #fff;
+  }
+  .login-brand-panel .brand-title {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+    line-height: 1.15;
+  }
+  .login-brand-panel .brand-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 40px;
+  }
+  .login-brand-panel .brand-features {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .login-brand-panel .brand-feat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.75);
+  }
+  .login-brand-panel .brand-feat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* Right form panel */
+  .login-right-panel {
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 56px 48px;
+    box-shadow: -8px 0 40px rgba(0,0,0,0.25);
+  }
+  .login-wrap {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    justify-content: flex-start;
+  }
+  .login-logo { font-size: 26px; margin-bottom: 4px; }
+  .login-sub  { font-size: 15px; margin-bottom: 32px; }
+  .login-wrap .card {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    background: transparent;
+    margin-bottom: 0;
+  }
+  .login-wrap .card .inp {
+    padding: 13px 14px;
+    font-size: 15px;
+  }
+  .login-wrap .card .btn-block {
+    padding: 15px;
+    font-size: 16px;
+    border-radius: 10px;
+    margin-top: 4px;
+  }
+  .login-wrap .card .form-group {
+    margin-bottom: 20px;
+  }
+}
+
+/* ================================================================
+   ADMIN FILTER — responsive grid
+   ================================================================ */
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+@media (min-width: 600px) {
+  .filter-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .filter-grid .filter-actions { grid-column: 3 / 5; align-self: end; }
+}
+
+/* ================================================================
+   OFFLINE INDICATOR
+   ================================================================ */
+#offline-bar {
+  background: #dc2626;
+  color: #fff;
+  text-align: center;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 80;
+}
+</style>
+</head>
+<body>
+
+<div id="offline-bar">ไม่มีสัญญาณอินเทอร์เน็ต — บางฟีเจอร์อาจไม่ทำงาน</div>
+<div id="toast"></div>
+
+<!-- SHIFT WARNING -->
+<div id="shift-warning">
+  <div id="shift-warning-box">
+    <div style="font-size:36px;margin-bottom:10px">⏰</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:8px">หมดเวลากะแล้ว</div>
+    <div style="font-size:14px;color:#888;margin-bottom:24px">ระบบจะออกจากระบบให้อัตโนมัติ</div>
+    <button class="btn btn-primary btn-block" onclick="doLogout()">ออกจากระบบ</button>
+  </div>
+</div>
+
+<!-- ================================================================
+     LOGIN
+     ================================================================ -->
+<div id="screen-login" class="screen active">
+  <div style="flex:1;display:flex;flex-direction:column">
+
+    <!-- Desktop: left branding panel (hidden on mobile via CSS) -->
+    <div class="login-brand-panel" style="display:none" id="login-brand-panel">
+      <div class="brand-title">Sand Sea<br>Resort</div>
+      <div class="brand-sub">ระบบแจ้งซ่อม EN System</div>
+      <div class="brand-features">
+        <div class="brand-feat">
+          <div class="brand-feat-icon">🔔</div>
+          <span>แจ้งซ่อมได้ทันที พร้อมแนบรูปภาพ</span>
+        </div>
+        <div class="brand-feat">
+          <div class="brand-feat-icon">📊</div>
+          <span>ติดตามสถานะงานแบบ Real-time</span>
+        </div>
+        <div class="brand-feat">
+          <div class="brand-feat-icon">👷</div>
+          <span>ช่างรับงานและอัปเดตได้ทันที</span>
+        </div>
+        <div class="brand-feat">
+          <div class="brand-feat-icon">📋</div>
+          <span>ผู้บริหารดูรายงานสรุปได้ครบถ้วน</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right form panel (on mobile = full width, on desktop = right column) -->
+    <div class="login-right-panel" id="login-right-panel">
+      <div class="login-wrap">
+        <div class="login-logo">Sand Sea Resort</div>
+        <div class="login-sub">ระบบแจ้งซ่อม EN System</div>
+
+        <div class="card">
+          <div class="form-group">
+            <label class="lbl">รหัสพนักงาน</label>
+            <input class="inp" id="inp-empid" type="text" placeholder="เช่น SS001" autocomplete="username" inputmode="text">
+          </div>
+          <div class="form-group">
+            <label class="lbl">รหัสผ่าน</label>
+            <input class="inp" id="inp-pw" type="password" placeholder="••••••" autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label class="lbl">เข้าสู่ระบบในฐานะ</label>
+            <select class="inp" id="inp-role" onchange="onRoleChange()">
+              <option value="staff">พนักงานทั่วไป</option>
+              <option value="tech">ช่าง / Engineering</option>
+              <option value="it_tech">ช่าง / IT</option>
+              <option value="it_admin">IT Manager / หัวหน้า IT</option>
+              <option value="admin">หัวหน้าช่าง / Admin</option>
+              <option value="HK_admin">หัวหน้า HK / HK Admin</option>
+            </select>
+          </div>
+          <div class="form-group" id="grp-shift" style="display:none">
+            <label class="lbl">กะที่ทำงานวันนี้</label>
+            <select class="inp" id="inp-shift" onchange="onShiftChange()">
+              <option value="">— เลือกกะ —</option>
+              <option value="shift_06">06:00 – 16:00</option>
+              <option value="shift_08">08:00 – 18:00</option>
+              <option value="shift_10">10:00 – 20:00</option>
+              <option value="shift_12">12:00 – 22:00</option>
+              <option value="shift_21">21:00 – 07:00</option>
+            </select>
+            <div id="shift-time-warn" style="display:none;margin-top:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 12px;font-size:13px;color:#856404;line-height:1.5"></div>
+          </div>
+          <button class="btn btn-primary btn-block" id="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
+          <p style="font-size:12px;color:#aaa;text-align:center;margin-top:14px">ลืมรหัสผ่าน ติดต่อ IT</p>
+        </div>
+
+        <!-- PWA install hint shown only on mobile browser -->
+        <div id="pwa-hint" style="display:none;margin-top:12px;padding:12px 14px;background:#f0ede8;border-radius:10px;font-size:12px;color:#666;line-height:1.5">
+          <strong style="color:#1a1a1a">ติดตั้งเป็น App ได้เลย</strong><br>
+          iOS: กด Share → "Add to Home Screen"<br>
+          Android: กดเมนู Chrome → "Install app"
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================================================================
+     STAFF: REPORT
+     ================================================================ -->
+<div id="screen-staff-report" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">แจ้งซ่อม</div>
+      <div class="topbar-sub" id="staff-name-lbl"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-sm" onclick="gotoStaffTrack()">งานของฉัน</button>
+      <button class="btn btn-sm btn-icon" title="เปลี่ยนรหัสผ่าน" onclick="openChangePw()">🔑</button>
+      <button class="btn btn-sm btn-danger" onclick="doLogout()">ออก</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="cmax">
+      <div class="sec">ประเภทงาน</div>
+      <div class="type-grid">
+        <button class="type-btn" data-type="ไฟฟ้า / แสงสว่าง" onclick="selType(this)"><span style="font-size:24px;display:block;margin-bottom:5px">💡</span>ไฟฟ้า / แสงสว่าง</button>
+        <button class="type-btn" data-type="ประปา / น้ำ" onclick="selType(this)"><span style="font-size:24px;display:block;margin-bottom:5px">🚿</span>ประปา / น้ำ</button>
+        <button class="type-btn" data-type="แอร์ / ระบายอากาศ" onclick="selType(this)"><span style="font-size:24px;display:block;margin-bottom:5px">❄️</span>แอร์ / ระบาย</button>
+        <button class="type-btn" data-type="ประตู / หน้าต่าง / กุญแจ" onclick="selType(this)"><span style="font-size:24px;display:block;margin-bottom:5px">🔑</span>ประตู / กุญแจ</button>
+        <button class="type-btn" data-type="เฟอร์นิเจอร์ / ของในห้อง" onclick="selType(this)"><span style="font-size:24px;display:block;margin-bottom:5px">🛋️</span>เฟอร์นิเจอร์</button>
+        <button class="type-btn" data-type="Wifi / อุปกรณ์ IT" onclick="selType(this)"><span style="font-size:24px;display:block;margin-bottom:5px">📶</span>Wifi / IT</button>
+        <button class="type-btn" data-type="สระว่ายน้ำ" onclick="selType(this)"><span style="font-size:24px;display:block;margin-bottom:5px">🏊</span>สระว่ายน้ำ</button>
+        <button class="type-btn" data-type="TV / โทรศัพท์" onclick="selType(this)"><span style="font-size:24px;display:block;margin-bottom:5px">📺</span>TV / โทรศัพท์</button>
+        <button class="type-btn" data-type="อื่นๆ" onclick="selType(this)"><span style="font-size:24px;display:block;margin-bottom:5px">🔧</span>อื่นๆ</button>
+      </div>
+      <div id="it-info" class="info-box" style="display:none">📡 งานประเภทนี้จะแจ้งเตือนทีม IT โดยตรง</div>
+
+      <div class="sec">รายละเอียด</div>
+      <div class="form-group">
+        <label class="lbl">ตำแหน่ง / ห้อง</label>
+        <input class="inp" id="inp-location" placeholder="เช่น ห้อง 204, ล็อบบี้">
+      </div>
+      <div class="form-group">
+        <label class="lbl">รายละเอียดปัญหา</label>
+        <textarea class="inp" id="inp-detail" rows="3" placeholder="อธิบายปัญหาที่พบ..."></textarea>
+      </div>
+      <div class="sec">แนบรูปภาพ (ไม่เกิน 5 รูป)</div>
+      <div class="photo-row" id="photo-row">
+        <label class="photo-slot" id="ps0">
+          <span style="font-size:26px">📷</span><span>เพิ่มรูป</span>
+          <input type="file" accept="image/*" onchange="handlePhoto(this,0)">
+        </label>
+        <label class="photo-slot" id="ps1">
+          <span style="font-size:26px">📷</span><span>เพิ่มรูป</span>
+          <input type="file" accept="image/*" onchange="handlePhoto(this,1)">
+        </label>
+        <label class="photo-slot" id="ps2">
+          <span style="font-size:26px">📷</span><span>เพิ่มรูป</span>
+          <input type="file" accept="image/*" onchange="handlePhoto(this,2)">
+        </label>
+        <label class="photo-slot" id="ps3">
+          <span style="font-size:26px">📷</span><span>เพิ่มรูป</span>
+          <input type="file" accept="image/*" onchange="handlePhoto(this,3)">
+        </label>
+        <label class="photo-slot" id="ps4">
+          <span style="font-size:26px">📷</span><span>เพิ่มรูป</span>
+          <input type="file" accept="image/*" onchange="handlePhoto(this,4)">
+        </label>
+      </div>
+      <div style="height:16px"></div>
+      <button class="btn btn-primary btn-block" id="btn-submit" onclick="submitTicket()">ส่งงานแจ้งซ่อม</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     STAFF: TRACK
+     ================================================================ -->
+<div id="screen-staff-track" class="screen">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title">ติดตามงานของฉัน</div></div>
+    <div class="topbar-right">
+      <button class="btn btn-sm" onclick="showScreen('staff-report')">+ แจ้งใหม่</button>
+      <button class="btn btn-sm btn-icon" title="เปลี่ยนรหัสผ่าน" onclick="openChangePw()">🔑</button>
+      <button class="btn btn-sm btn-danger" onclick="doLogout()">ออก</button>
+    </div>
+  </div>
+  <div class="content" id="staff-track-content"></div>
+</div>
+
+<!-- ================================================================
+     TECH: MAIN
+     ================================================================ -->
+<div id="screen-tech-main" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="tech-title">หน้างาน</div>
+      <div class="topbar-sub" id="tech-sub"></div>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn btn-sm btn-icon" title="เปลี่ยนรหัสผ่าน" onclick="openChangePw()">🔑</button>
+      <button class="btn btn-sm btn-danger" onclick="doLogout()">ออก</button>
+    </div>
+  </div>
+  <div class="tabs" id="tech-tabs">
+    <div class="tab active" onclick="switchTechTab(this,'open')">รอรับงาน <span id="badge-open" class="ndot" style="display:none"></span></div>
+    <div class="tab" onclick="switchTechTab(this,'in_progress')">กำลังทำ</div>
+    <div class="tab" onclick="switchTechTab(this,'waiting_parts')">รออะไหล่</div>
+    <div class="tab" onclick="switchTechTab(this,'on_hold')">⏸ พัก/ปิด OO</div>
+    <div class="tab" onclick="switchTechTab(this,'done')">เสร็จแล้ว</div>
+  </div>
+  <div class="content" id="tech-content"></div>
+</div>
+
+<!-- ================================================================
+     TICKET DETAIL
+     ================================================================ -->
+<div id="screen-detail" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="detail-id">—</div>
+      <div class="topbar-sub" id="detail-status"></div>
+    </div>
+    <button class="btn btn-sm" onclick="goBack()">← กลับ</button>
+  </div>
+  <div class="content" id="detail-content"></div>
+</div>
+
+<!-- ================================================================
+     ADMIN
+     ================================================================ -->
+<div id="screen-admin" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div id="admin-name" style="font-size:14px;font-weight:700"></div>
+      <div class="topbar-sub" id="admin-date"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-sm" id="btn-export" onclick="doExport()">📥 Export Excel</button>
+      <button class="btn btn-sm btn-icon" title="เปลี่ยนรหัสผ่าน" onclick="openChangePw()">🔑</button>
+      <button class="btn btn-sm btn-danger" onclick="doLogout()">ออก</button>
+    </div>
+  </div>
+  <!-- Filter bar -->
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px" class="admin-filter-wrap">
+    <div style="max-width:680px;margin:0 auto">
+      <div class="filter-grid">
+        <div>
+          <div class="lbl" style="margin-bottom:4px">จากวันที่</div>
+          <input type="date" class="inp" id="filter-from" style="font-size:13px;padding:8px 10px">
+        </div>
+        <div>
+          <div class="lbl" style="margin-bottom:4px">ถึงวันที่</div>
+          <input type="date" class="inp" id="filter-to" style="font-size:13px;padding:8px 10px">
+        </div>
+        <div>
+          <div class="lbl" style="margin-bottom:4px">ช่าง</div>
+          <select class="inp" id="filter-tech" style="font-size:13px;padding:8px 10px"><option value="">ทุกคน</option></select>
+        </div>
+        <div>
+          <div class="lbl" style="margin-bottom:4px">ประเภทงาน</div>
+          <select class="inp" id="filter-type" style="font-size:13px;padding:8px 10px">
+            <option value="">ทุกประเภท</option>
+            <option>ไฟฟ้า / แสงสว่าง</option><option>ประปา / น้ำ</option>
+            <option>แอร์ / ระบายอากาศ</option><option>ประตู / หน้าต่าง / กุญแจ</option>
+            <option>เฟอร์นิเจอร์ / ของในห้อง</option><option>Wifi / อุปกรณ์ IT</option>
+            <option>สระว่ายน้ำ</option><option>TV / โทรศัพท์</option><option>อื่นๆ</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="applyAdminFilter()">🔍 แสดงผล</button>
+        <button class="btn btn-sm" onclick="clearAdminFilter()">รีเซ็ต</button>
+      </div>
+    </div>
+  </div>
+  <div class="content" id="admin-content"></div>
+</div>
+
+<!-- ================================================================
+     CHANGE PASSWORD MODAL
+     ================================================================ -->
+<div id="change-pw-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>เปลี่ยนรหัสผ่าน</span>
+      <button class="modal-close" onclick="closeChangePw()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="lbl">รหัสผ่านเดิม</label><input class="inp" id="cpw-old" type="password" placeholder="••••••"></div>
+      <div class="form-group"><label class="lbl">รหัสผ่านใหม่</label><input class="inp" id="cpw-new" type="password" placeholder="อย่างน้อย 4 ตัวอักษร"></div>
+      <div class="form-group" style="margin-bottom:0"><label class="lbl">ยืนยันรหัสผ่านใหม่</label><input class="inp" id="cpw-confirm" type="password" placeholder="••••••"></div>
+      <div style="height:16px"></div>
+      <button id="btn-cpw-submit" class="btn btn-primary btn-block" onclick="doChangePassword()">บันทึกรหัสผ่านใหม่</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     ADMIN TICKET MODAL
+     ================================================================ -->
+<div id="admin-ticket-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box" style="max-width:580px">
+    <div class="modal-header">
+      <span id="modal-title"></span>
+      <button class="modal-close" onclick="closeAdminModal()">×</button>
+    </div>
+    <div id="modal-list" style="padding:12px 16px"></div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// GOOGLE APPS SCRIPT BRIDGE
+// ================================================================
+// GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
+// ================================================================
+
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbw5_96UvjZ-_YKmYMFoXwcGgY5XYsB1pF9jN6QEGh7TqobfW-Brmgv8vzRwJNofkE6X5A/exec';
+var SS_KEY  = 'en_session';
+
+// ── VAPID Public Key (ต้องตรงกับที่ใส่ใน Script Properties ของ GAS) ──
+// สร้าง key ได้ที่ https://vapidkeys.com/ แล้วใส่ค่า publicKey ตรงนี้
+var VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
+
+// ── Session ──
+function saveSession(u) { try { localStorage.setItem(SS_KEY, JSON.stringify(u)); } catch(e){} }
+function loadSession()  { try { var r=localStorage.getItem(SS_KEY); return r?JSON.parse(r):null; } catch(e){ return null; } }
+function clearSession() { try { localStorage.removeItem(SS_KEY); } catch(e){} }
+
+// ── SLA minutes by type (client-side แสดงผลเท่านั้น) ──
+var SLA_MAP = {
+  'ไฟฟ้า / แสงสว่าง':240,'ประปา / น้ำ':240,'แอร์ / ระบายอากาศ':240,
+  'ประตู / หน้าต่าง / กุญแจ':480,'เฟอร์นิเจอร์ / ของในห้อง':480,
+  'Wifi / อุปกรณ์ IT':120,'สระว่ายน้ำ':480,'TV / โทรศัพท์':240,'อื่นๆ':480
+};
+
+/**
+ * gasCall(fn, params, onSuccess, onFail)
+ * เรียก GAS function ผ่าน fetch POST → ?action=fn
+ * params = object ที่จะส่งเป็น JSON body
+ */
+function gasCall(fn, params, onSuccess, onFail, opts) {
+  opts = opts || {};
+  var retryCount = opts._retryCount || 0;
+  var maxRetries = (opts.maxRetries != null) ? opts.maxRetries : 2; // รวมพยายามทั้งหมด 3 ครั้ง
+  var silent     = !!opts.silent; // true = ไม่ขึ้น toast ตอน fail สุดท้าย (ใช้กับ background poll)
+
+  fetch(GAS_URL + '?action=' + encodeURIComponent(fn), {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(params || {})
+  })
+  .then(function(r) {
+    // ถ้า GAS ตอบกลับมาเป็น HTML (redirect หน้า login) จะ parse ไม่ได้
+    var ct = r.headers.get('content-type') || '';
+    if (!ct.includes('json')) {
+      return r.text().then(function(txt) {
+        console.error('[gasCall] ' + fn + ' — non-JSON response:', txt.substring(0, 300));
+        // สาเหตุที่พบบ่อยที่สุด: Deploy > Web app > "Who has access" ไม่ได้ตั้งเป็น "Anyone"
+        // ทำให้ Google สกัดคำขอไว้ตั้งแต่ก่อนถึง doPost() แล้วส่งหน้า HTML (login/consent หรือหน้าเว็บแอปแบบ bound)
+        // กลับมาแทน — เบราว์เซอร์เลย parse JSON ไม่ได้ และ CORS จะ block ไปด้วยเพราะหน้านั้นไม่มี CORS header
+        var looksLikeAuthWall = /accounts\.google\.com|ServiceLogin|createTemplateFromFile|<html/i.test(txt);
+        var hint = looksLikeAuthWall
+          ? ' (deployment อาจตั้งค่า "Who has access" ไม่ใช่ Anyone หรือ GAS_URL เป็น deployment เก่าที่ไม่ตรงกับเวอร์ชันล่าสุด — ตรวจสอบ Deploy > Manage deployments)'
+          : '';
+        throw new Error('GAS returned non-JSON' + hint + ': ' + txt.substring(0, 100));
+      });
+    }
+    return r.json();
+  })
+  .then(function(result) {
+    if (result && result.success === false) {
+      console.error('[gasCall] ' + fn + ' failed:', result.message);
+      toast('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+      if (onFail) onFail(result);
+    } else {
+      if (onSuccess) onSuccess(result);
+    }
+  })
+  .catch(function(err) {
+    // ── เครือข่ายสะดุดชั่วคราว (เปิดแอปจาก background, สลับ wifi/4G, GAS cold start)
+    // ลองใหม่อัตโนมัติก่อนค่อยฟ้อง error ให้ผู้ใช้เห็น
+    if (retryCount < maxRetries) {
+      var delay = 700 * (retryCount + 1); // 700ms, 1400ms
+      console.warn('[gasCall] ' + fn + ' network error, retry ' + (retryCount + 1) + '/' + maxRetries + ' in ' + delay + 'ms:', err.message || err);
+      setTimeout(function() {
+        var nextOpts = { maxRetries: maxRetries, silent: silent, _retryCount: retryCount + 1 };
+        gasCall(fn, params, onSuccess, onFail, nextOpts);
+      }, delay);
+      return;
+    }
+    console.error('[gasCall] ' + fn + ' error:', err);
+    if (!silent) toast('❌ ' + fn + ': ' + (err.message || 'เชื่อมต่อไม่ได้'));
+    if (onFail) onFail(err);
+  });
+}
+
+// ================================================================
+// WEB PUSH — Subscribe / Unsubscribe
+// ================================================================
+
+// ================================================================
+// PERIODIC BACKGROUND SYNC — เช็คงานใหม่แม้แอปปิด/อยู่ background
+// รองรับเฉพาะ Android Chrome (PWA ที่ "ติดตั้ง" ลงเครื่องแล้วเท่านั้น)
+// เบราว์เซอร์/อุปกรณ์อื่นจะ fallback ไปใช้ in-page polling ด้านล่างแทน
+// ================================================================
+var BG_SYNC_TAG = 'en-check-tickets';
+
+function sendUserToSW(user) {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready.then(function(reg) {
+    if (reg.active) reg.active.postMessage({ type: 'SET_USER', user: user });
+  }).catch(function(){});
+}
+
+function clearUserInSW() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready.then(function(reg) {
+    if (reg.active) reg.active.postMessage({ type: 'CLEAR_USER' });
+  }).catch(function(){});
+}
+
+async function registerBackgroundSync() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    var reg = await navigator.serviceWorker.ready;
+
+    // ต้องมี Notification permission ก่อน ไม่งั้น showNotification ใน SW จะถูกเงียบ
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+
+    if ('periodicSync' in reg) {
+      var status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+      if (status.state === 'granted') {
+        await reg.periodicSync.register(BG_SYNC_TAG, {
+          minInterval: 15 * 60 * 1000 // ขอ 15 นาที — เบราว์เซอร์อาจยืดเวลาจริงตามดุลพินิจ (battery/usage)
+        });
+        console.log('[BG Sync] registered periodicSync');
+        return;
+      }
+    }
+    // ไม่รองรับ periodicSync หรือยังไม่ได้รับสิทธิ์ → fallback เป็น one-off sync
+    // (ทำงานครั้งเดียวตอนเน็ตกลับมา ไม่ใช่ตามรอบเวลา แต่ยังดีกว่าไม่มีเลย)
+    if ('sync' in reg) {
+      await reg.sync.register(BG_SYNC_TAG);
+      console.log('[BG Sync] fallback: one-off sync registered');
+    }
+  } catch (e) {
+    console.log('[BG Sync] not available:', e.message || e);
+  }
+}
+
+async function unregisterBackgroundSync() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    if ('periodicSync' in reg) {
+      await reg.periodicSync.unregister(BG_SYNC_TAG);
+    }
+  } catch (e) {}
+}
+
+// รับข้อความจาก SW เมื่อผู้ใช้กดแจ้งเตือนตอนแอปเปิดอยู่แล้ว (ไม่ใช่ผ่าน URL param)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', function(event) {
+    var msg = event.data || {};
+    if (msg.type === 'OPEN_TICKET' && msg.ticketId) {
+      if (CU) {
+        openDetail(msg.ticketId);
+      } else {
+        window._pendingTicket = msg.ticketId;
+      }
+    }
+  });
+}
+
+// ================================================================
+// IN-APP NOTIFICATION — Polling (ไม่ต้อง VAPID/FCM)
+// เช็คงานใหม่ทุก 30 วินาที แจ้งเตือนผ่าน Notification API โดยตรง
+// (ทำงานเฉพาะตอนแอปเปิด/อยู่ foreground — ตอน background ดูบล็อก Periodic Sync ด้านบน)
+// ================================================================
+
+var _notifyTimer  = null;
+var _seenIds      = null;   // null = ยังไม่ได้ init, {} = init แล้ว
+var _pollReady    = false;  // true หลัง poll ครั้งแรกเสร็จ
+
+/**
+ * เริ่ม polling หลัง login
+ */
+function startNotifyPolling() {
+  if (_notifyTimer) clearInterval(_notifyTimer);
+  _seenIds   = null;
+  _pollReady = false;
+
+  // ขอ permission ก่อน
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
+  // poll ครั้งแรกทันที (เพื่อ init seenIds) แล้วทุก 30 วินาที
+  pollNewTickets();
+  _notifyTimer = setInterval(pollNewTickets, 30000);
+
+  // ลงทะเบียนให้ Service Worker เช็คงานต่อแม้แอปปิดอยู่
+  sendUserToSW(CU);
+  registerBackgroundSync();
+}
+
+function stopNotifyPolling() {
+  if (_notifyTimer) { clearInterval(_notifyTimer); _notifyTimer = null; }
+  _seenIds   = null;
+  _pollReady = false;
+}
+
+function pollNewTickets() {
+  if (!CU) return;
+  if (!['tech','it_tech','admin','it_admin','HK_admin'].includes(CU.role)) return;
+
+  gasCall('getTickets', {userJson: JSON.stringify(CU), filterStatus: 'open'},
+    function(result) {
+      var tickets = (result && result.tickets) ? result.tickets : [];
+      var currentIds = {};
+      tickets.forEach(function(t){ currentIds[t.TicketID] = t; });
+
+      if (_seenIds === null) {
+        // ครั้งแรก — บันทึก ticketId ที่มีอยู่แล้วทั้งหมด ไม่แจ้งเตือน
+        _seenIds   = currentIds;
+        _pollReady = true;
+        console.log('[Poll] init — เห็น ' + Object.keys(_seenIds).length + ' ใบงาน');
+        toast('🔔 เปิดการแจ้งเตือนแล้ว (' + Object.keys(_seenIds).length + ' ใบ)');
+        return;
+      }
+
+      // ครั้งถัดไป — หา ticketId ใหม่ที่ยังไม่เคยเห็น
+      var newCount = 0;
+      Object.keys(currentIds).forEach(function(id) {
+        if (!_seenIds[id]) {
+          newCount++;
+          console.log('[Poll] งานใหม่: ' + id);
+          _seenIds[id] = currentIds[id];
+          if (Notification.permission === 'granted') {
+            showTicketNotification(currentIds[id]);
+          }
+        }
+      });
+      if (newCount === 0) {
+        console.log('[Poll] ไม่มีงานใหม่ — ' + new Date().toLocaleTimeString());
+      }
+    },
+    function(err) { console.warn('[Poll] getTickets ล้มเหลว (เงียบ ไม่กระทบผู้ใช้):', err); },
+    { silent: true }
+  );
+}
+
+function showTicketNotification(t) {
+  var title = '🔧 งานใหม่เข้ามา';
+  var body  = (t.JobType || '') + ' — ' + (t.Location || '') +
+              '\n' + String(t.Detail || '').substring(0, 60);
+
+  // ใช้ Service Worker showNotification แทน new Notification()
+  // เพราะ SW notification ทำงานได้แม้ app อยู่ background บน Android
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.ready.then(function(reg) {
+      reg.showNotification(title, {
+        body:     body,
+        icon:     './icon-EN.png',
+        badge:    './icon-EN.png',
+        tag:      t.TicketID,
+        renotify: true,
+        vibrate:  [200, 100, 200],
+        data:     { ticketId: t.TicketID }
+      });
+    });
+  } else {
+    // fallback สำหรับ desktop / browser ที่ไม่มี SW
+    try {
+      var n = new Notification(title, {
+        body:     body,
+        icon:     './icon-EN.png',
+        tag:      t.TicketID,
+        renotify: true
+      });
+      n.onclick = function() { window.focus(); n.close(); openDetail(t.TicketID); };
+      setTimeout(function(){ n.close(); }, 8000);
+    } catch(e) {
+      console.warn('[Notify] error:', e);
+    }
+  }
+}
+
+function initDB() { /* ไม่ใช้ใน GAS mode */ }
+
+// ================================================================
+// STATE
+// ================================================================
+var CU = null;
+var screenHistory = [];  // ← History stack แทน prevScreen ตัวเดียว
+var techTab    = "open";
+var autoTimer  = null;
+var photoFiles = [null, null, null, null, null];
+var photoDataURLs = [null, null, null, null, null];
+var selJobType = "";
+var _closeFiles = [null, null, null, null, null];
+var _closeDataURLs = [null, null, null, null, null];
+var _pStatus = null;
+
+// ================================================================
+// SCREEN NAV
+// ================================================================
+// ================================================================
+// SCREEN NAV — History-stack navigation
+// ================================================================
+function showScreen(id) {
+  var curr = (document.querySelector('.screen.active')||{}).id || "";
+  // บันทึก screen ปัจจุบันลง history ก่อนเปลี่ยน
+  // ยกเว้น login (logout ไม่ควรถูก back กลับมาได้)
+  if (curr && curr !== 'screen-login') screenHistory.push(curr);
+  _activateScreen('screen-' + id);
+}
+
+// ── เปิด screen โดยไม่บันทึก history (ใช้ใน goBack เท่านั้น) ──
+function _activateScreen(fullId) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el = document.getElementById(fullId);
+  if (el) { el.classList.add('active'); window.scrollTo(0,0); }
+}
+
+// ── ป้องกัน double-tap ──
+var _goingBack = false;
+function goBack() {
+  if (_goingBack) return;   // บล็อก double-tap
+  _goingBack = true;
+  setTimeout(function(){ _goingBack = false; }, 600);
+
+  // auto-save progress note ที่ยังไม่ได้กดบันทึก
+  var activeScreen = (document.querySelector('.screen.active')||{}).id || "";
+  var progressEl   = activeScreen === 'screen-detail' ? document.getElementById('inp-progress') : null;
+  var pendingNote  = progressEl ? progressEl.value.trim() : '';
+  var ticketId     = document.getElementById('detail-id') ? document.getElementById('detail-id').textContent.trim() : '';
+  if (pendingNote && ticketId) {
+    gasCall('updateProgress', {userJson: JSON.stringify(CU), ticketId: ticketId, newStatus: '', comment: pendingNote},
+      function() { toast('✅ บันทึกความคืบหน้าที่ค้างไว้ให้อัตโนมัติแล้ว'); },
+      function() {},
+      { silent: true }
+    );
+  }
+
+  // Pop จาก history stack โดยไม่เรียก showScreen (ป้องกัน push ซ้ำ)
+  if (screenHistory.length > 0) {
+    _activateScreen(screenHistory.pop());
+  }
+}
+
+// ── Toast ──
+var toastTimer;
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.style.opacity='1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.style.opacity='0'; }, 2800);
+}
+
+// ================================================================
+// SHIFT CONFIG — เวลาที่อนุญาตให้ลงชื่อเข้างาน (±30 นาที ก่อนกะเริ่ม)
+// ================================================================
+var SHIFT_CONFIG = {
+  shift_06: { label: '06:00 – 16:00', startH: 6,  startM: 0,  allowFrom: [5,  30], allowTo: [7,  0]  },
+  shift_08: { label: '08:00 – 18:00', startH: 8,  startM: 0,  allowFrom: [7,  30], allowTo: [9,  0]  },
+  shift_10: { label: '10:00 – 20:00', startH: 10, startM: 0,  allowFrom: [9,  30], allowTo: [11, 0]  },
+  shift_12: { label: '12:00 – 22:00', startH: 12, startM: 0,  allowFrom: [11, 30], allowTo: [13, 0]  },
+  shift_21: { label: '21:00 – 07:00', startH: 21, startM: 0,  allowFrom: [20, 30], allowTo: [22, 0]  }
+};
+
+/**
+ * แปลงเวลาปัจจุบัน → นาทีนับจากเที่ยงคืน
+ * กะดึก 21:00-07:00 ใช้ช่วง 20:30-22:00 (ไม่ข้ามวัน ง่ายต่อการเปรียบเทียบ)
+ */
+function nowMinutes() {
+  var n = new Date();
+  return n.getHours() * 60 + n.getMinutes();
+}
+
+function shiftAllowedNow(shiftKey) {
+  var cfg = SHIFT_CONFIG[shiftKey];
+  if (!cfg) return { ok: false, reason: 'ไม่พบข้อมูลกะ' };
+  var now = nowMinutes();
+  var from = cfg.allowFrom[0] * 60 + cfg.allowFrom[1];
+  var to   = cfg.allowTo[0]   * 60 + cfg.allowTo[1];
+  if (now >= from && now <= to) return { ok: true };
+  // แสดงเวลาปัจจุบันและช่วงที่อนุญาต
+  var n = new Date();
+  var nowStr  = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  var fromStr = String(cfg.allowFrom[0]).padStart(2,'0') + ':' + String(cfg.allowFrom[1]).padStart(2,'0');
+  var toStr   = String(cfg.allowTo[0]).padStart(2,'0')   + ':' + String(cfg.allowTo[1]).padStart(2,'0');
+  return {
+    ok: false,
+    reason: 'กะ ' + cfg.label + '\nลงชื่อเข้างานได้ช่วง ' + fromStr + ' – ' + toStr +
+            '\nเวลาปัจจุบัน ' + nowStr + ' ยังไม่ถึงเวลา หรือเลยเวลาแล้ว'
+  };
+}
+
+function onRoleChange() {
+  var r = document.getElementById('inp-role').value;
+  var show = (r === 'tech' || r === 'it_tech');
+  document.getElementById('grp-shift').style.display = show ? '' : 'none';
+  if (show) {
+    // ล้าง warning เดิม + pre-select กะที่ตรงเวลาปัจจุบัน
+    document.getElementById('shift-time-warn').style.display = 'none';
+    autoSelectShift();
+  }
+}
+
+/** เลือกกะที่ตรงเวลาปัจจุบันให้อัตโนมัติ */
+function autoSelectShift() {
+  var sel = document.getElementById('inp-shift');
+  var keys = Object.keys(SHIFT_CONFIG);
+  for (var i = 0; i < keys.length; i++) {
+    if (shiftAllowedNow(keys[i]).ok) {
+      sel.value = keys[i];
+      document.getElementById('shift-time-warn').style.display = 'none';
+      return;
+    }
+  }
+  // ไม่มีกะที่ตรง → ให้ผู้ใช้เลือกเอง แต่ warning จะแสดงเมื่อเลือก
+  sel.value = '';
+}
+
+/** เรียกเมื่อผู้ใช้เปลี่ยน dropdown กะ */
+function onShiftChange() {
+  var shiftKey = document.getElementById('inp-shift').value;
+  var warnDiv  = document.getElementById('shift-time-warn');
+  if (!shiftKey) { warnDiv.style.display = 'none'; return; }
+  var chk = shiftAllowedNow(shiftKey);
+  if (chk.ok) {
+    warnDiv.style.display = 'none';
+  } else {
+    warnDiv.style.display = 'block';
+    warnDiv.innerHTML = '⚠️ ' + chk.reason.replace(/\n/g, '<br>');
+  }
+}
+
+function doLogin() {
+  var empId = document.getElementById('inp-empid').value.trim();
+  var pw    = document.getElementById('inp-pw').value.trim();
+  var role  = document.getElementById('inp-role').value;
+  var shift = document.getElementById('inp-shift').value;
+  if (!empId || !pw) { toast('กรุณากรอกข้อมูลให้ครบ'); return; }
+
+  // ตรวจสอบกะเฉพาะ role ช่าง
+  if (role === 'tech' || role === 'it_tech') {
+    if (!shift) { toast('กรุณาเลือกกะที่ทำงาน'); return; }
+    var chk = shiftAllowedNow(shift);
+    if (!chk.ok) {
+      // แสดง popup modal แจ้งเตือน
+      showShiftErrorPopup(chk.reason);
+      return;
+    }
+  }
+
+  var btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
+
+  gasCall('login', {empId:empId, password:pw, shift:shift, selectedRole:role},
+    function(result) {
+      btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+      CU = result.user;
+      CU.shiftStart = new Date().toISOString();
+      saveSession(CU);
+      afterLogin();
+    },
+    function() { btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ'; }
+  );
+}
+
+/** Popup modal แจ้งเตือนเวลากะไม่ถูกต้อง */
+function showShiftErrorPopup(reason) {
+  // สร้าง overlay + modal
+  var overlay = document.createElement('div');
+  overlay.id = 'shift-err-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:320px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center">' +
+      '<div style="font-size:48px;margin-bottom:12px">⏰</div>' +
+      '<div style="font-size:17px;font-weight:700;color:#c0392b;margin-bottom:10px">เวลาไม่ตรงกะ</div>' +
+      '<div style="font-size:14px;color:#555;line-height:1.7;margin-bottom:20px">' + reason.replace(/\n/g,'<br>') + '</div>' +
+      '<button onclick="document.getElementById(\'shift-err-overlay\').remove()" ' +
+        'style="background:#333;color:#fff;border:none;border-radius:10px;padding:11px 32px;font-size:15px;font-weight:600;cursor:pointer;width:100%">รับทราบ</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  // กด outside ก็ปิดได้
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+}
+
+function afterLogin() {
+  if (CU.role === 'staff') {
+    document.getElementById('staff-name-lbl').textContent = CU.name + ' — ' + CU.department;
+    showScreen('staff-report');
+    startStaffPolling();
+
+  } else if (['admin','it_admin','HK_admin'].includes(CU.role)) {
+    var d = new Date();
+    document.getElementById('admin-name').textContent = CU.name + ' — ' + CU.department;
+    document.getElementById('admin-date').textContent =
+      d.toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+    showScreen('admin');
+    loadAdminData();
+    startNotifyPolling();   // admin รับแจ้งเตือนด้วย
+    autoTimer = setInterval(checkShiftExpiryFromServer, 300000);
+
+  } else {
+    var shiftLabels = {shift_06:'06:00–16:00',shift_08:'08:00–18:00',
+      shift_10:'10:00–20:00',shift_12:'12:00–22:00',shift_21:'21:00–07:00'};
+    document.getElementById('tech-title').textContent =
+      CU.role==='it_tech' ? 'หน้างาน — ทีม IT' : 'หน้างาน — Engineering';
+    document.getElementById('tech-sub').innerHTML =
+      CU.name + '&nbsp;<span class="shift-chip">⏰ ' + (shiftLabels[CU.shift]||CU.shift) + '</span>';
+    showScreen('tech-main');
+    loadTechTickets('open');
+    startNotifyPolling();   // ช่างรับแจ้งเตือนงานใหม่
+    autoTimer = setInterval(function(){ loadTechTickets(techTab); checkShiftExpiryFromServer(); }, 300000);
+  }
+
+  // ถ้ามี pending ticket (กดแจ้งเตือนตอน app ปิดอยู่) → เปิดทันที
+  if (window._pendingTicket) {
+    var tid = window._pendingTicket;
+    window._pendingTicket = null;
+    setTimeout(function(){ openDetail(tid); }, 500);
+  }
+}
+
+function checkShiftExpiryFromServer() {
+  if (!CU) return;
+  gasCall('checkShiftExpiry', {userJson: JSON.stringify(CU)}, function(r) {
+    if (r && r.expired) {
+      clearInterval(autoTimer);
+      document.getElementById('shift-warning').style.display = 'flex';
+    }
+  });
+}
+
+function doLogout() {
+  screenHistory = [];  // เคลียร์ history เมื่อ logout
+  clearInterval(autoTimer);
+  stopNotifyPolling();
+  stopStaffPolling();
+  clearUserInSW();
+  unregisterBackgroundSync();
+  CU = null; clearSession();
+  document.getElementById('shift-warning').style.display='none';
+  showScreen('login');
+}
+
+// ================================================================
+// STAFF NOTIFICATION — Poll สถานะใบงานของตัวเอง
+// ================================================================
+var _staffPollTimer  = null;
+var _staffSeenStatus = {};
+var _staffPollReady  = false;
+
+var STATUS_LABEL = {
+  'open':        '📋 รอช่างรับงาน',
+  'in_progress': '🔧 ช่างรับงานแล้ว กำลังดำเนินการ',
+  'on_hold':     '⏸ รออะไหล่ / ติดปัญหา',
+  'done':        '✅ ดำเนินการเสร็จแล้ว',
+  'oo_closed':   '🔒 ปิดใบงานแล้ว'
+};
+
+function startStaffPolling() {
+  if (_staffPollTimer) clearInterval(_staffPollTimer);
+  _staffSeenStatus = {};
+  _staffPollReady  = false;
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  pollStaffTickets();
+  _staffPollTimer = setInterval(pollStaffTickets, 30000);
+
+  // ลงทะเบียนให้ Service Worker เช็คสถานะใบงานต่อแม้แอปปิดอยู่
+  sendUserToSW(CU);
+  registerBackgroundSync();
+}
+
+function stopStaffPolling() {
+  if (_staffPollTimer) { clearInterval(_staffPollTimer); _staffPollTimer = null; }
+  _staffSeenStatus = {};
+  _staffPollReady  = false;
+}
+
+function pollStaffTickets() {
+  if (!CU || CU.role !== 'staff') return;
+  gasCall('getTickets', {userJson: JSON.stringify(CU), filterStatus: 'all'},
+    function(result) {
+      var tickets = (result && result.tickets) ? result.tickets : [];
+      if (!_staffPollReady) {
+        tickets.forEach(function(t){ _staffSeenStatus[t.TicketID] = t.Status; });
+        _staffPollReady = true;
+        console.log('[StaffPoll] init — ' + tickets.length + ' ใบ');
+        toast('🔔 เปิดการแจ้งเตือนใบงานแล้ว');
+        return;
+      }
+      tickets.forEach(function(t) {
+        var prev = _staffSeenStatus[t.TicketID];
+        if (prev === undefined) { _staffSeenStatus[t.TicketID] = t.Status; return; }
+        if (prev !== t.Status) {
+          console.log('[StaffPoll] ' + t.TicketID + ': ' + prev + ' → ' + t.Status);
+          _staffSeenStatus[t.TicketID] = t.Status;
+          showStaffNotification(t);
+        }
+      });
+    }
+  );
+}
+
+function showStaffNotification(t) {
+  if (Notification.permission !== 'granted') return;
+  var label    = STATUS_LABEL[t.Status] || t.Status;
+  var techName = t.TechName ? ' โดย ' + t.TechName : '';
+  var title    = 'อัปเดตใบงาน';
+  var body     = label + techName + '\n' + (t.JobType||'') + ' — ' + (t.Location||'');
+  var tag      = t.TicketID + '-' + t.Status + '-' + Date.now();
+
+  var opts = {
+    body: body, icon: './icon-EN.png', badge: './icon-EN.png',
+    tag: tag, renotify: true, silent: false,
+    vibrate: [300, 100, 300], data: { ticketId: t.TicketID }
+  };
+
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.ready.then(function(reg) {
+      reg.showNotification(title, opts);
+    });
+  } else {
+    try {
+      var n = new Notification(title, opts);
+      n.onclick = function(){ window.focus(); n.close(); openDetail(t.TicketID); };
+      setTimeout(function(){ n.close(); }, 8000);
+    } catch(e) { console.warn('[StaffNotify]', e); }
+  }
+}
+
+// ================================================================
+// STAFF — REPORT
+// ================================================================
+function selType(btn) {
+  document.querySelectorAll('.type-btn').forEach(function(b){ b.classList.remove('sel'); });
+  btn.classList.add('sel');
+  selJobType = btn.dataset.type;
+  document.getElementById('it-info').style.display = selJobType==='Wifi / อุปกรณ์ IT' ? '' : 'none';
+}
+
+function handlePhoto(input, idx) {
+  if (!input.files[0]) return;
+  photoFiles[idx] = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    photoDataURLs[idx] = e.target.result;
+    var slot = document.getElementById('ps'+idx);
+    var img = slot.querySelector('img') || document.createElement('img');
+    img.src = e.target.result;
+    slot.appendChild(img);
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function submitTicket() {
+  if (!selJobType) { toast('กรุณาเลือกประเภทงานก่อน'); return; }
+  var loc    = document.getElementById('inp-location').value.trim();
+  var detail = document.getElementById('inp-detail').value.trim();
+  if (!loc)    { toast('กรุณาระบุตำแหน่ง'); return; }
+  if (!detail) { toast('กรุณากรอกรายละเอียดปัญหา'); return; }
+
+  var btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'กำลังอัปโหลดรูป...';
+
+  var filesToUpload = photoFiles.filter(Boolean);
+
+  uploadFilesSequentially(filesToUpload, 'photo-', function(uploadedUrls) {
+    btn.textContent = 'กำลังส่ง...';
+    var data = {
+      jobType:   selJobType,
+      location:  loc,
+      detail:    detail,
+      imageUrls: uploadedUrls
+    };
+    gasCall('createTicket', {userJson: JSON.stringify(CU), data: data},
+      function(result) {
+        btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม';
+        toast('✅ ส่งงานสำเร็จ — ' + result.ticketId);
+        resetReportForm();
+        gotoStaffTrack();
+      },
+      function() { btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม'; }
+    );
+  }, function() {
+    btn.disabled = false; btn.textContent = 'ส่งงานแจ้งซ่อม';
+    toast('❌ อัปโหลดรูปไม่สำเร็จ');
+  });
+}
+
+/**
+ * อัปโหลดไฟล์ทีละไฟล์ผ่าน doPost ?action=uploadImageToDrive
+ * filePrefix ใช้แยกรูปแจ้งซ่อม (photo-) กับรูปปิดงาน (close-)
+ */
+function uploadFilesSequentially(files, filePrefix, onSuccess, onError) {
+  var urls = [];
+  var idx = 0;
+  function next() {
+    if (idx >= files.length) { onSuccess(urls); return; }
+    var file = files[idx];
+    if (!file) { idx++; next(); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var dataUrl = e.target.result;
+      // dataUrl = "data:image/jpeg;base64,XXXXXX"
+      var parts    = dataUrl.split(',');
+      var mimeType = parts[0].replace('data:','').replace(';base64','');
+      var base64   = parts[1];
+      var fileName = filePrefix + Date.now() + '-' + idx + '.' + (file.name.split('.').pop() || 'jpg');
+      gasCall('uploadImageToDrive', {base64Data: base64, fileName: fileName, mimeType: mimeType},
+        function(result) {
+          if (result && result.url) urls.push(result.url);
+          idx++; next();
+        },
+        function() { onError(); }
+      );
+    };
+    reader.readAsDataURL(file);
+  }
+  if (files.length === 0) { onSuccess([]); return; }
+  next();
+}
+
+function resetReportForm() {
+  document.querySelectorAll('.type-btn').forEach(function(b){ b.classList.remove('sel'); });
+  selJobType = '';
+  document.getElementById('inp-location').value = '';
+  document.getElementById('inp-detail').value   = '';
+  document.getElementById('it-info').style.display = 'none';
+  [0,1,2,3,4].forEach(function(i){
+    var slot = document.getElementById('ps'+i);
+    var img  = slot.querySelector('img');
+    if (img) img.remove();
+    photoFiles[i] = null; photoDataURLs[i] = null;
+  });
+}
+
+// ================================================================
+// STAFF — TRACK
+// ================================================================
+function gotoStaffTrack() {
+  showScreen('staff-track');
+  loadStaffTickets();
+}
+
+function loadStaffTickets() {
+  var el = document.getElementById('staff-track-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div><span>กำลังโหลด...</span></div>';
+  gasCall('getTickets', {userJson: JSON.stringify(CU), filterStatus: 'all'},
+    function(result) {
+      var tickets = (result && result.tickets) ? result.tickets : [];
+      if (!tickets.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>ยังไม่มีงานที่แจ้ง</div></div>';
+        return;
+      }
+      el.innerHTML = '<div class="cmax">' + tickets.map(function(t){ return ticketCard(t,'staff'); }).join('') + '</div>';
+    },
+    function(){ el.innerHTML='<div class="empty">โหลดข้อมูลไม่ได้</div>'; }
+  );
+}
+
+// ================================================================
+// TECH — MAIN
+// ================================================================
+function loadTechTickets(status) {
+  techTab = status;
+  var el = document.getElementById('tech-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div><span>กำลังโหลด...</span></div>';
+
+  gasCall('getTickets', {userJson: JSON.stringify(CU), filterStatus: 'all'},
+    function(result) {
+      var tickets = (result && result.tickets) ? result.tickets : [];
+      var hasOpen = tickets.some(function(t){ return t.Status==='open'; });
+      document.getElementById('badge-open').style.display = hasOpen ? '' : 'none';
+      var filtered;
+      if (status === 'on_hold') {
+        filtered = tickets.filter(function(t){ return t.Status==='on_hold'||t.Status==='oo_closed'; });
+      } else {
+        filtered = tickets.filter(function(t){ return t.Status===status; });
+      }
+      if (!filtered.length) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div>ไม่มีงานในหมวดนี้</div></div>';
+        return;
+      }
+      el.innerHTML = '<div class="cmax">' + filtered.map(function(t){ return ticketCard(t, CU.role); }).join('') + '</div>';
+    },
+    function(){ el.innerHTML='<div class="empty">โหลดข้อมูลไม่ได้</div>'; }
+  );
+}
+
+function switchTechTab(tab, status) {
+  document.querySelectorAll('#tech-tabs .tab').forEach(function(t){ t.classList.remove('active'); });
+  tab.classList.add('active');
+  loadTechTickets(status);
+}
+
+// ================================================================
+// TICKET CARD
+// ================================================================
+var SL = {
+  open:'<span class="badge b-open">รอรับงาน</span>',
+  in_progress:'<span class="badge b-inprog">กำลังดำเนินการ</span>',
+  waiting_parts:'<span class="badge b-wait">รออะไหล่</span>',
+  done:'<span class="badge b-done">เสร็จแล้ว</span>',
+  on_hold:'<span class="badge" style="background:#f3f0e8;color:#665c3a">⏸ พักใบงาน</span>',
+  oo_closed:'<span class="badge" style="background:#f0e8f3;color:#5a3a66">🔒 ปิด OO</span>'
+};
+
+function slaHtml(t) {
+  if (!t.SLADue || t.Status==='done') return '';
+  var now=Date.now(), due=new Date(t.SLADue).getTime(), cre=new Date(t.CreatedAt).getTime();
+  var pct=Math.min(100,Math.round(((now-cre)/(due-cre))*100));
+  var cls=pct<60?'sla-ok':pct<90?'sla-warn':'sla-over';
+  var rem=Math.max(0,Math.round((due-now)/60000));
+  var rs=rem>60?Math.floor(rem/60)+' ชม. '+(rem%60)+' นาที':rem+' นาที';
+  return '<div class="sla-track"><div class="sla-fill '+cls+'" style="width:'+pct+'%"></div></div>' +
+         '<div class="sla-lbl">'+(pct>=100?'เกิน SLA แล้ว':'SLA เหลือ '+rs)+'</div>';
+}
+
+function ticketCard(t, role) {
+  var timeStr = t.CreatedAt ? new Date(t.CreatedAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '';
+  var deptBadge = t.JobType==='Wifi / อุปกรณ์ IT'
+    ? ' <span class="badge b-it">IT</span>'
+    : ' <span class="badge" style="background:#f0f0eb;color:#555">EN</span>';
+  var canWork = (role==='tech'||role==='it_tech'||role==='admin'||role==='it_admin'||role==='HK_admin');
+  var actions = '';
+
+  if (canWork && t.Status==='open') {
+    actions = '<div style="margin-top:10px;display:flex;gap:8px">' +
+      '<button class="btn btn-primary btn-sm" onclick="acceptTicket(\''+t.TicketID+'\')">▶ รับงาน</button>' +
+      '<button class="btn btn-sm" onclick="openDetail(\''+t.TicketID+'\')">ดูรายละเอียด</button></div>';
+  } else if (canWork && (t.Status==='in_progress'||t.Status==='waiting_parts')) {
+    actions = '<div style="margin-top:10px"><button class="btn btn-primary btn-sm" onclick="openDetail(\''+t.TicketID+'\')">เข้าหน้างาน →</button></div>';
+  } else if (canWork && (t.Status==='on_hold'||t.Status==='oo_closed')) {
+    actions = '<div style="margin-top:10px"><button class="btn btn-sm" style="border-color:#16a34a;color:#16a34a" onclick="openDetail(\''+t.TicketID+'\')">🔓 เปิดดู / เปิดใบงานใหม่</button></div>';
+  } else if (role==='staff') {
+    actions = '<div style="margin-top:10px"><button class="btn btn-sm" onclick="openDetail(\''+t.TicketID+'\')">ดูความคืบหน้า</button></div>';
+  }
+
+  return '<div class="card">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+      (SL[t.Status]||'')+deptBadge +
+      '<span style="font-size:11px;color:#aaa">'+timeStr+'</span>' +
+    '</div>' +
+    '<div style="font-size:15px;font-weight:600;margin-bottom:3px">'+t.JobType+' — '+t.Location+'</div>' +
+    '<div style="font-size:12px;color:#888">'+String(t.Detail||'').substring(0,60)+((t.Detail&&String(t.Detail).length>60)?'...':'')+'</div>' +
+    (t.TechName?'<div style="font-size:12px;color:#888;margin-top:2px">ช่าง: '+t.TechName+'</div>':"") +
+    slaHtml(t) + actions + '</div>';
+}
+
+// ================================================================
+// ACCEPT TICKET
+// ================================================================
+function acceptTicket(ticketId) {
+  gasCall('acceptTicket', {userJson: JSON.stringify(CU), ticketId: ticketId},
+    function() { toast('✅ รับงานสำเร็จ'); openDetail(ticketId); },
+    function() { toast('❌ ไม่สามารถรับงานได้'); }
+  );
+}
+
+// ================================================================
+// TICKET DETAIL
+// ================================================================
+function openDetail(ticketId) {
+  showScreen('detail');
+  document.getElementById('detail-id').textContent = ticketId;
+  document.getElementById('detail-content').innerHTML = '<div class="loading"><div class="spinner"></div><span>กำลังโหลด...</span></div>';
+
+  gasCall('getTicketDetail', {userJson: JSON.stringify(CU), ticketId: ticketId},
+    function(result) {
+      if (!result || !result.ticket) {
+        document.getElementById('detail-content').innerHTML = '<p style="padding:16px;color:#dc2626">ไม่พบใบงาน</p>';
+        return;
+      }
+      renderDetail(result.ticket, result.logs || []);
+    },
+    function(){ document.getElementById('detail-content').innerHTML = '<p style="padding:16px;color:#dc2626">โหลดข้อมูลไม่ได้</p>'; }
+  );
+}
+
+function renderDetail(t, logs) {
+  var statusNames = {open:'รอรับงาน',in_progress:'กำลังดำเนินการ',waiting_parts:'รออะไหล่',
+    done:'เสร็จแล้ว',on_hold:'⏸ พักใบงาน',oo_closed:'🔒 แจ้งปิด OO'};
+  document.getElementById('detail-status').textContent = statusNames[t.Status]||'';
+
+  var tlHtml = logs.map(function(l){
+    var ts = new Date(l.Timestamp||l.timestamp).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'});
+    var note = l.Note || l.note || '';
+    var who  = l.EmpName || l.empName || l.EmpID || l.empId || '';
+    return '<div class="tl-item"><div class="tl-dot done"></div>' +
+      '<div class="tl-text">'+note+'</div>' +
+      '<div class="tl-time">'+ts+' — '+who+'</div></div>';
+  }).join('');
+
+  var isAdminRole = CU && ['admin','HK_admin','it_admin'].includes(CU.role);
+  var isTech = CU && ['tech','it_tech','it_admin','admin','HK_admin'].includes(CU.role);
+
+  /**
+   * แปลง Google Drive URL ให้เป็น thumbnail ที่แสดงใน <img> ได้จริง
+   * Google บล็อก uc?export=view แล้วสำหรับ embedding — ต้องใช้ thumbnail endpoint แทน
+   * thumbnail URL: https://drive.google.com/thumbnail?id=FILE_ID&sz=w400
+   * view URL (กดดูเต็ม): https://drive.google.com/file/d/FILE_ID/view
+   */
+  function driveThumbUrl(url) {
+    if (!url) return '';
+    var m = url.match(/[?&]id=([^&]+)/) || url.match(/\/d\/([^\/]+)\//);
+    var id = m ? m[1] : null;
+    if (!id) return url; // ไม่ใช่ Drive URL → ใช้ URL เดิม
+    return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w400';
+  }
+  function driveViewUrl(url) {
+    if (!url) return url;
+    var m = url.match(/[?&]id=([^&]+)/) || url.match(/\/d\/([^\/]+)\//);
+    var id = m ? m[1] : null;
+    if (!id) return url;
+    return 'https://drive.google.com/file/d/' + id + '/view';
+  }
+  function imgThumb(url) {
+    var thumb = driveThumbUrl(url);
+    var view  = driveViewUrl(url);
+    return '<a href="'+view+'" target="_blank" rel="noopener" style="display:block;width:80px;height:80px;border-radius:10px;overflow:hidden;border:1px solid #d1d0ca;background:#f0f0f0;position:relative">' +
+      '<img src="'+thumb+'" style="width:100%;height:100%;object-fit:cover" ' +
+        'onerror="this.style.display=\'none\';this.parentNode.querySelector(\'.img-err\').style.display=\'flex\'">' +
+      '<span class="img-err" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:10px;color:#aaa;text-align:center;flex-direction:column;gap:2px">📷<br>กดดูรูป</span>' +
+    '</a>';
+  }
+
+  var imgHtml = '';
+  if (t.ImageUrls) {
+    var urls = String(t.ImageUrls).split(',').filter(Boolean);
+    if (urls.length) {
+      imgHtml = '<div class="sec">รูปภาพก่อนซ่อม</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
+        urls.map(imgThumb).join('') + '</div>';
+    }
+  }
+  var closeImgHtml = '';
+  if (t.CloseImageUrls) {
+    var curls = String(t.CloseImageUrls).split(',').filter(Boolean);
+    if (curls.length) {
+      closeImgHtml = '<div class="sec">รูปภาพหลังซ่อมเสร็จ</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
+        curls.map(imgThumb).join('') + '</div>';
+    }
+  }
+
+  var doneBox = '';
+  if (t.Status==='on_hold'||t.Status==='oo_closed') {
+    doneBox = '<div class="card" style="border-color:#c8b96e">' +
+      '<div style="font-weight:600;color:#665c3a;margin-bottom:6px">'+(t.Status==='on_hold'?'⏸ ใบงานนี้ถูกพักไว้':'🔒 ใบงานนี้ถูกปิด OO')+'</div>' +
+      (isTech?'<button class="btn btn-sm" style="border-color:#16a34a;color:#16a34a" onclick="reopenTicket(\''+t.TicketID+'\')">🔓 เปิดใบงานใหม่</button>':'')+
+    '</div>';
+  }
+  if (t.Status==='done') {
+    doneBox = '<div class="card" style="border-color:#bbf7d0">' +
+      '<div style="font-weight:600;color:#166534;margin-bottom:4px">✅ งานเสร็จแล้ว</div>' +
+      '<div style="font-size:13px">'+(t.CloseSummary||'—')+'</div>' +
+      (t.DurationMin?'<div style="font-size:12px;color:#888;margin-top:6px">ใช้เวลา '+t.DurationMin+' นาที</div>':'')+
+    '</div>';
+  }
+
+  var actionHtml = '';
+  if (isTech && (t.Status==='in_progress'||t.Status==='waiting_parts')) {
+    actionHtml =
+      '<div class="sec">อัปเดตความคืบหน้า</div>' +
+      '<div class="card">' +
+        '<div class="form-group"><label class="lbl">บันทึก</label>' +
+          '<textarea class="inp" id="inp-progress" rows="2" placeholder="เช่น ตรวจสอบแล้ว กำลังดำเนินการ..."></textarea></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">' +
+          '<button class="btn btn-sm'+(t.Status==='in_progress'?' btn-primary':'')+'" id="sbtn-prog" onclick="setPStatus(\''+t.TicketID+'\',\'in_progress\')">กำลังดำเนินการ</button>' +
+          '<button class="btn btn-sm'+(t.Status==='waiting_parts'?' btn-primary':'')+'" id="sbtn-wait" onclick="setPStatus(\''+t.TicketID+'\',\'waiting_parts\')">รออะไหล่</button>' +
+          (isAdminRole?'<button class="btn btn-sm" onclick="setAdminStatus(\''+t.TicketID+'\',\'on_hold\')" style="border-color:#c8b96e;color:#665c3a">⏸ พักใบงาน</button>':'')+
+          (isAdminRole?'<button class="btn btn-sm" onclick="setAdminStatus(\''+t.TicketID+'\',\'oo_closed\')" style="border-color:#b96ec8;color:#5a3a66">🔒 แจ้งปิด OO</button>':'')+
+        '</div>' +
+        '<button class="btn btn-sm" onclick="saveProgress(\''+t.TicketID+'\')">💾 บันทึกความคืบหน้า</button>' +
+      '</div>' +
+      '<div class="sec">ปิดงาน</div>' +
+      '<div class="card">' +
+        '<div class="form-group"><label class="lbl">สรุปการแก้ไข</label>' +
+          '<textarea class="inp" id="inp-close" rows="3" placeholder="อธิบายสิ่งที่แก้ไข..."></textarea></div>' +
+        '<div class="sec">แนบรูปหลังซ่อมเสร็จ (ไม่เกิน 5 รูป)</div>' +
+        '<div class="photo-row" style="margin-bottom:12px">' +
+          '<label class="photo-slot" id="cp0"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,0)"></label>' +
+          '<label class="photo-slot" id="cp1"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,1)"></label>' +
+          '<label class="photo-slot" id="cp2"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,2)"></label>' +
+          '<label class="photo-slot" id="cp3"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,3)"></label>' +
+          '<label class="photo-slot" id="cp4"><span style="font-size:26px">📷</span><span>เพิ่มรูป</span><input type="file" accept="image/*" onchange="handleClosePhoto(this,4)"></label>' +
+        '</div>' +
+        '<button id="btn-close-ticket" class="btn btn-primary btn-block" onclick="closeTicketAction(\''+t.TicketID+'\')">✅ ปิดงาน</button>' +
+      '</div>' +
+      (isAdminRole?
+        '<div class="sec">คอมเม้นต์จาก Admin</div>' +
+        '<div class="card"><div class="form-group">' +
+          '<textarea class="inp" id="inp-admin-comment" rows="2" placeholder="คอมเม้นต์หรือโน้ตสำหรับช่าง..."></textarea></div>' +
+          '<button class="btn btn-sm btn-primary" onclick="submitAdminComment(\''+t.TicketID+'\')">💬 บันทึกคอมเม้นต์</button></div>'
+      :'');
+
+    _pStatus = t.Status;
+    _closeFiles = [null,null,null,null,null];
+    _closeDataURLs = [null,null,null,null,null];
+  }
+
+  document.getElementById('detail-content').innerHTML =
+    '<div class="cmax">' +
+    '<div class="card">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:8px">' +
+        (SL[t.Status]||'') +
+        (t.JobType==='Wifi / อุปกรณ์ IT'?'<span class="badge b-it">IT</span>':"") +
+      '</div>' +
+      '<div style="font-size:16px;font-weight:700;margin-bottom:4px">'+t.JobType+' — '+t.Location+'</div>' +
+      '<div style="font-size:12px;color:#888;margin-bottom:8px">'+t.Department+' · แจ้งโดย '+t.ReporterName+'</div>' +
+      '<div style="background:#F5F4F0;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.6">'+(t.Detail||'')+'</div>' +
+      slaHtml(t) +
+    '</div>' +
+    imgHtml + closeImgHtml + doneBox +
+    '<div class="sec">ความเคลื่อนไหว</div>' +
+    '<div class="card"><div class="tl">'+(tlHtml||'<div style="color:#aaa;font-size:13px">ยังไม่มีรายการ</div>')+'</div></div>' +
+    actionHtml + '</div>';
+}
+
+function setPStatus(ticketId, st) {
+  _pStatus = st;
+  var pb = document.getElementById('sbtn-prog');
+  var wb = document.getElementById('sbtn-wait');
+  if (pb) pb.className = 'btn btn-sm'+(st==='in_progress'?' btn-primary':'');
+  if (wb) wb.className = 'btn btn-sm'+(st==='waiting_parts'?' btn-primary':'');
+}
+
+function saveProgress(ticketId) {
+  var note = document.getElementById('inp-progress').value.trim();
+  if (!note) { toast('กรุณากรอกบันทึก'); return; }
+  gasCall('updateProgress', {userJson: JSON.stringify(CU), ticketId: ticketId, newStatus: _pStatus, comment: note},
+    function() { toast('✅ บันทึกสำเร็จ'); openDetail(ticketId); },
+    function() { toast('❌ บันทึกไม่ได้'); }
+  );
+}
+
+function handleClosePhoto(input, idx) {
+  if (!input.files[0]) return;
+  _closeFiles[idx] = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _closeDataURLs[idx] = e.target.result;
+    var slot = document.getElementById('cp'+idx);
+    var img = slot.querySelector('img') || document.createElement('img');
+    img.src = e.target.result;
+    slot.appendChild(img);
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function closeTicketAction(ticketId) {
+  var summary = document.getElementById('inp-close').value.trim();
+  if (!summary) { toast('กรุณากรอกสรุปการแก้ไข'); return; }
+  var btn = document.getElementById('btn-close-ticket');
+  btn.disabled = true; btn.textContent = 'กำลังอัปโหลดรูป...';
+
+  // ── สำคัญ: ถ้ามีบันทึกความคืบหน้าที่พิมพ์ไว้แต่ยังไม่ได้กด "บันทึกความคืบหน้า"
+  // ให้บันทึกเก็บไว้ก่อนปิดงาน ป้องกันข้อมูลหายเวลาช่างพิมพ์โน้ตแล้วกดปิดงานเลย
+  var progressEl = document.getElementById('inp-progress');
+  var pendingNote = progressEl ? progressEl.value.trim() : '';
+
+  function proceedWithUploadAndClose() {
+    var filesToUpload = (_closeFiles || []).filter(Boolean);
+
+    uploadFilesSequentially(filesToUpload, 'close-', function(uploadedUrls) {
+      btn.textContent = 'กำลังปิดงาน...';
+      gasCall('closeTicket', {userJson: JSON.stringify(CU), ticketId: ticketId, summary: summary, imageUrls: uploadedUrls},
+        function() {
+          btn.disabled = false; btn.textContent = '✅ ปิดงาน';
+          toast('✅ ปิดงานสำเร็จ');
+          showScreen('tech-main');
+          loadTechTickets('open');
+        },
+        function() { btn.disabled = false; btn.textContent = '✅ ปิดงาน'; toast('❌ ปิดงานไม่ได้'); }
+      );
+    }, function() {
+      btn.disabled = false; btn.textContent = '✅ ปิดงาน';
+      toast('❌ อัปโหลดรูปไม่สำเร็จ');
+    });
+  }
+
+  if (pendingNote) {
+    gasCall('updateProgress', {userJson: JSON.stringify(CU), ticketId: ticketId, newStatus: '', comment: pendingNote},
+      function() { proceedWithUploadAndClose(); },
+      function() { proceedWithUploadAndClose(); } // แม้บันทึก note ไม่สำเร็จ ก็ยังปิดงานต่อ ไม่บล็อกช่าง
+    );
+  } else {
+    proceedWithUploadAndClose();
+  }
+}
+
+function reopenTicket(ticketId) {
+  if (!confirm('ยืนยันเปิดใบงานนี้ใหม่?')) return;
+  gasCall('reopenTicket', {userJson: JSON.stringify(CU), ticketId: ticketId},
+    function() { toast('✅ เปิดใบงานใหม่แล้ว'); openDetail(ticketId); },
+    function() { toast('❌ เปิดใบงานไม่ได้'); }
+  );
+}
+
+function setAdminStatus(ticketId, status) {
+  var labels = {on_hold:'พักใบงาน',oo_closed:'แจ้งปิด OO'};
+  if (!confirm('ยืนยันเปลี่ยนสถานะเป็น: '+labels[status]+'?')) return;
+  gasCall('setAdminStatus', {userJson: JSON.stringify(CU), ticketId: ticketId, status: status, note: ''},
+    function() { toast('✅ เปลี่ยนสถานะแล้ว'); openDetail(ticketId); },
+    function() { toast('❌ เปลี่ยนสถานะไม่ได้'); }
+  );
+}
+
+function submitAdminComment(ticketId) {
+  var note = document.getElementById('inp-admin-comment').value.trim();
+  if (!note) { toast('กรุณากรอกข้อความ'); return; }
+  gasCall('adminComment', {userJson: JSON.stringify(CU), ticketId: ticketId, comment: note},
+    function() {
+      toast('✅ บันทึกคอมเม้นต์แล้ว');
+      document.getElementById('inp-admin-comment').value = '';
+      openDetail(ticketId);
+    },
+    function() { toast('❌ บันทึกไม่ได้'); }
+  );
+}
+
+// ================================================================
+// ADMIN — DASHBOARD
+// ================================================================
+var adminFilter = { from:'', to:'', dept:'', tech:'', type:'' };
+
+function applyAdminFilter() {
+  adminFilter.from = document.getElementById('filter-from').value;
+  adminFilter.to   = document.getElementById('filter-to').value;
+  adminFilter.tech = document.getElementById('filter-tech').value;
+  adminFilter.type = document.getElementById('filter-type').value;
+  loadAdminData();
+}
+function clearAdminFilter() {
+  ['filter-from','filter-to'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['filter-tech','filter-type'].forEach(function(id){ document.getElementById(id).selectedIndex=0; });
+  adminFilter = {from:'',to:'',dept:'',tech:'',type:''};
+  loadAdminData();
+}
+
+function loadAdminData() {
+  var el = document.getElementById('admin-content');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div><span>กำลังโหลด...</span></div>';
+
+  gasCall('getTickets', {userJson: JSON.stringify(CU), filterStatus: 'all'},
+    function(result) {
+      var tickets = ((result && result.tickets) ? result.tickets : []).sort(function(a,b){ return new Date(b.CreatedAt)-new Date(a.CreatedAt); });
+
+      var techSel = document.getElementById('filter-tech');
+      if (techSel) {
+        var techs = [];
+        tickets.forEach(function(t){ if(t.TechName && techs.indexOf(t.TechName)<0) techs.push(t.TechName); });
+        techSel.innerHTML = '<option value="">ทุกคน</option>' + techs.map(function(n){ return '<option>'+n+'</option>'; }).join('');
+      }
+
+      var from = adminFilter.from ? new Date(adminFilter.from+'T00:00:00') : new Date(2020,0,1);
+      var to   = adminFilter.to   ? new Date(adminFilter.to+'T23:59:59')   : new Date(2099,11,31);
+      var filtered = tickets.filter(function(t){
+        var d = new Date(t.CreatedAt);
+        if (d < from || d > to) return false;
+        if (adminFilter.tech && t.TechName !== adminFilter.tech) return false;
+        if (adminFilter.type && t.JobType !== adminFilter.type)  return false;
+        return true;
+      });
+      renderAdminDash(filtered);
+    },
+    function(){ el.innerHTML = '<div class="empty">โหลดข้อมูลไม่ได้</div>'; }
+  );
+}
+
+function renderAdminDash(tickets) {
+  _lastAdminTickets = tickets;
+  var el = document.getElementById('admin-content');
+  var total   = tickets.length;
+  var open    = tickets.filter(function(t){ return t.Status==='open'; }).length;
+  var inProg  = tickets.filter(function(t){ return t.Status==='in_progress'; }).length;
+  var onHold  = tickets.filter(function(t){ return t.Status==='on_hold'||t.Status==='oo_closed'; }).length;
+  var done    = tickets.filter(function(t){ return t.Status==='done'; }).length;
+  var durs    = tickets.filter(function(t){ return t.Status==='done'&&t.DurationMin; }).map(function(t){ return +t.DurationMin; });
+  var avgMin  = durs.length ? Math.round(durs.reduce(function(a,b){return a+b;},0)/durs.length) : 0;
+  var doneR   = tickets.filter(function(t){ return t.Status==='done'&&t.ClosedAt&&t.SLADue; });
+  var withinS = doneR.filter(function(t){ return new Date(t.ClosedAt)<=new Date(t.SLADue); }).length;
+  var slaPct  = doneR.length ? Math.round((withinS/doneR.length)*100) : 0;
+
+  var byType = {};
+  tickets.forEach(function(t){ byType[t.JobType]=(byType[t.JobType]||0)+1; });
+  var byTypeHtml = Object.entries(byType).sort(function(a,b){return b[1]-a[1];}).map(function(e){
+    var pct = total>0 ? Math.round((e[1]/total)*100) : 0;
+    return '<div class="bar-row"><div class="bar-lbl">'+e[0]+'</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div>' +
+      '<div class="bar-cnt">'+e[1]+'</div></div>';
+  }).join('');
+
+  // แสดงสูงสุด 200 รายการ (เพิ่มจาก 100); ควรพิจารณา pagination ในอนาคต
+  var rowsHtml = tickets.slice(0,200).map(function(t){
+    var ts = t.CreatedAt ? new Date(t.CreatedAt).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}) : '';
+    return '<tr style="cursor:pointer" onclick="openDetail(\''+t.TicketID+'\')">'+
+      '<td>'+t.TicketID+'</td><td>'+t.Location+'</td>' +
+      '<td>'+(SL[t.Status]||t.Status)+'</td>' +
+      '<td>'+(t.TechName||'—')+'</td>' +
+      '<td style="text-align:right;color:#888">'+(t.DurationMin?t.DurationMin+' น.':'—')+'</td></tr>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="cmax">' +
+    '<div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">' +
+      '<div class="stat-card"><div class="stat-num">'+total+'</div><div class="stat-lbl">งานทั้งหมด</div></div>' +
+      '<div class="stat-card" style="cursor:pointer" onclick="adminViewTickets(\'open\')">' +
+        '<div class="stat-num" style="color:#dc2626">'+open+'</div><div class="stat-lbl">รอรับงาน</div>' +
+        (open>0?'<div style="font-size:10px;color:#dc2626;margin-top:2px">กดดูรายการ →</div>':'')+'</div>' +
+      '<div class="stat-card" style="cursor:pointer" onclick="adminViewTickets(\'in_progress\')">' +
+        '<div class="stat-num" style="color:#d97706">'+inProg+'</div><div class="stat-lbl">กำลังทำ</div>' +
+        (inProg>0?'<div style="font-size:10px;color:#d97706;margin-top:2px">กดดูรายการ →</div>':'')+'</div>' +
+      '<div class="stat-card" style="cursor:pointer" onclick="adminViewTickets(\'on_hold\')">' +
+        '<div class="stat-num" style="color:#665c3a">'+onHold+'</div><div class="stat-lbl">พัก / ปิด OO</div>' +
+        (onHold>0?'<div style="font-size:10px;color:#665c3a;margin-top:2px">กดดูรายการ →</div>':'')+'</div>' +
+      '<div class="stat-card"><div class="stat-num" style="color:#16a34a">'+done+'</div><div class="stat-lbl">เสร็จแล้ว</div></div>' +
+      '<div class="stat-card"><div class="stat-num">'+avgMin+' น.</div><div class="stat-lbl">เฉลี่ย / งาน</div></div>' +
+      '<div class="stat-card"><div class="stat-num" style="color:#16a34a">'+slaPct+'%</div><div class="stat-lbl">ทำใน SLA</div></div>' +
+    '</div>' +
+    (byTypeHtml?'<div class="sec">ประเภทงาน</div><div class="card">'+byTypeHtml+'</div>':'') +
+    '<div class="sec">รายการงาน (แสดง '+Math.min(tickets.length,200)+' จาก '+tickets.length+' รายการ)</div>' +
+    '<div class="card-flat"><div class="tbl-wrap"><table class="tbl">' +
+      '<thead><tr><th>Ticket</th><th>ตำแหน่ง</th><th>สถานะ</th><th>ช่าง</th><th style="text-align:right">เวลา</th></tr></thead>' +
+      '<tbody>'+(rowsHtml||'<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">ไม่มีข้อมูล</td></tr>')+'</tbody>' +
+    '</table></div></div></div>';
+}
+
+var _lastAdminTickets = [];
+
+function adminViewTickets(status) {
+  var labels = {open:'รอรับงาน',in_progress:'กำลังทำ',on_hold:'พัก / ปิด OO'};
+  document.getElementById('modal-title').textContent = 'งาน: '+(labels[status]||status);
+  var tickets = _lastAdminTickets.filter(function(t){
+    if (status==='on_hold') return t.Status==='on_hold'||t.Status==='oo_closed';
+    return t.Status===status;
+  });
+  if (!tickets.length) {
+    document.getElementById('modal-list').innerHTML='<div class="empty"><div class="empty-icon">✅</div><div>ไม่มีงานในหมวดนี้</div></div>';
+  } else {
+    document.getElementById('modal-list').innerHTML = tickets.map(function(t){
+      var ts = t.CreatedAt?new Date(t.CreatedAt).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}):'';
+      return '<div class="card" style="cursor:pointer;margin-bottom:8px" onclick="adminOpenTicket(this)" data-tid="'+t.TicketID+'">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+(SL[t.Status]||'')+'<span style="font-size:11px;color:#aaa">'+ts+'</span></div>' +
+        '<div style="font-weight:600;font-size:14px">'+t.JobType+' — '+t.Location+'</div>' +
+        '<div style="font-size:12px;color:#888;margin-top:2px">'+String(t.Detail||'').substring(0,60)+'</div>' +
+        (t.TechName?'<div style="font-size:11px;color:#aaa;margin-top:3px">ช่าง: '+t.TechName+'</div>':'<div style="font-size:11px;color:#dc2626;margin-top:3px">ยังไม่มีช่างรับงาน</div>')+
+        '</div>';
+    }).join('');
+  }
+  document.getElementById('admin-ticket-modal').style.display='flex';
+}
+function closeAdminModal() { document.getElementById('admin-ticket-modal').style.display='none'; }
+function adminOpenTicket(el) { closeAdminModal(); openDetail(el.getAttribute('data-tid')); }
+
+// ================================================================
+// EXPORT EXCEL (xlsx) — เรียก GAS exportTicketsToExcel พร้อม link รูปภาพ
+// ================================================================
+function doExport() {
+  if (!_lastAdminTickets || !_lastAdminTickets.length) { toast('ไม่มีข้อมูล'); return; }
+
+  // หาช่วงวันที่จาก filter ที่เลือกไว้ (ถ้ามี)
+  var dateFrom = adminFilter.from || '';
+  var dateTo   = adminFilter.to   || '';
+
+  toast('⏳ กำลัง Export Excel...');
+
+  // ปิดปุ่มชั่วคราวเพื่อกัน double-click
+  var btn = document.getElementById('btn-export');
+  if (btn) { btn.disabled = true; btn.textContent = 'กำลัง Export...'; }
+
+  gasCall('exportTicketsToExcel',
+    { userJson: JSON.stringify(CU), dateFrom: dateFrom, dateTo: dateTo },
+    function(result) {
+      if (btn) { btn.disabled = false; btn.textContent = '📥 Export Excel'; }
+      if (!result || !result.base64) { toast('❌ Export ไม่สำเร็จ'); return; }
+
+      // แปลง base64 → Blob → ดาวน์โหลด
+      var binary = atob(result.base64);
+      var bytes  = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      var blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      var d    = new Date();
+      a.href     = url;
+      a.download = 'EN-Report-' + d.getFullYear() +
+                   String(d.getMonth()+1).padStart(2,'0') +
+                   String(d.getDate()).padStart(2,'0') + '.xlsx';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+      toast('✅ Export Excel สำเร็จ — ' + result.count + ' รายการ (มี link รูปภาพ)');
+    },
+    function() {
+      if (btn) { btn.disabled = false; btn.textContent = '📥 Export Excel'; }
+      toast('❌ Export ไม่สำเร็จ');
+    }
+  );
+}
+
+// ================================================================
+// CHANGE PASSWORD
+// ================================================================
+function openChangePw() {
+  document.getElementById('cpw-old').value='';
+  document.getElementById('cpw-new').value='';
+  document.getElementById('cpw-confirm').value='';
+  document.getElementById('change-pw-modal').style.display='flex';
+}
+function closeChangePw() { document.getElementById('change-pw-modal').style.display='none'; }
+
+function doChangePassword() {
+  var oldPw  = document.getElementById('cpw-old').value.trim();
+  var newPw  = document.getElementById('cpw-new').value.trim();
+  var cfm    = document.getElementById('cpw-confirm').value.trim();
+  if (!oldPw||!newPw||!cfm) { toast('กรุณากรอกข้อมูลให้ครบ'); return; }
+  if (newPw!==cfm) { toast('รหัสผ่านใหม่ไม่ตรงกัน'); return; }
+  if (newPw.length<4) { toast('รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร'); return; }
+
+  var btn = document.getElementById('btn-cpw-submit');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+  gasCall('changePassword', {userJson: JSON.stringify(CU), oldPassword: oldPw, newPassword: newPw},
+    function() {
+      btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่านใหม่';
+      toast('✅ เปลี่ยนรหัสผ่านสำเร็จ');
+      closeChangePw();
+    },
+    function() { btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่านใหม่'; toast('❌ เปลี่ยนรหัสผ่านไม่ได้'); }
+  );
+}
+
+// ================================================================
+// PWA — SERVICE WORKER + INSTALL PROMPT
+// ================================================================
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+
+// Offline/online indicator
+window.addEventListener('offline', function() {
+  document.getElementById('offline-bar').style.display = 'block';
+});
+window.addEventListener('online', function() {
+  document.getElementById('offline-bar').style.display = 'none';
+});
+
+// Show install hint on login screen for mobile browsers (not standalone PWA)
+window.addEventListener('load', function() {
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  var isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  if (!isStandalone && isMobile) {
+    var hint = document.getElementById('pwa-hint');
+    if (hint) hint.style.display = 'block';
+  }
+});
+
+// Close modal on backdrop click
+['change-pw-modal','admin-ticket-modal'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('click', function(e) {
+      if (e.target === el) {
+        el.style.display = 'none';
+      }
+    });
+  }
+});
+
+// ================================================================
+// INIT
+// ================================================================
+initDB();
+(function init() {
+  // ตรวจ URL param ?ticket=XXXX (กดแจ้งเตือนตอน app ปิด)
+  var urlParams = new URLSearchParams(window.location.search);
+  var ticketParam = urlParams.get('ticket');
+  if (ticketParam) window._pendingTicket = ticketParam;
+
+  var saved = loadSession();
+  if (saved) { CU = saved; afterLogin(); }
+})();
+</script>
+</body>
+</html>
