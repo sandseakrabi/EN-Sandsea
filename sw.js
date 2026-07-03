@@ -4,7 +4,7 @@
 // (เช็คงานใหม่/อัปเดตสถานะ แม้แอปถูกปิดอยู่ — Android Chrome เท่านั้น)
 // ================================================================
 
-const GAS_URL   = 'https://script.google.com/macros/s/AKfycbxCNlPerwDD-XqDe6xzbj9VOCKVY4a0DPOfiIafq4kQ0mTn-xznUBE5kK25OB7eWpEiPg/exec';
+const GAS_URL   = 'https://script.google.com/macros/s/AKfycbxuqJXbcXJO8NQYxUuoWZpplmYdCqK1moqKc8UNPdzGAGi7GVz58Sgqea6FVO-sokY75A/exec';
 const ICON      = './icon-EN.png';
 const SYNC_TAG  = 'en-check-tickets';
 const DB_NAME   = 'en_sw_db';
