@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -1103,7 +1102,7 @@ textarea.inp { resize: none; line-height: 1.6; }
 // GAS FETCH BRIDGE — เรียก Code.gs ผ่าน fetch() (ใช้กับ GitHub Pages)
 // ================================================================
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycby_Z8V3xv_MHmTHFnN36DUYJUY2clXGLy2NMjlI3NPp-zNxyOcSFX60EeKZUERScAeDfQ/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbznh5ACKnhvBIb_qVw6O048EP_S8TpWoZQm69dKkGzC7m8hIL7g7cRrkmhs7psUGCPZMw/exec';
 var SS_KEY  = 'en_session';
 
 // ── VAPID Public Key (ต้องตรงกับที่ใส่ใน Script Properties ของ GAS) ──
@@ -1977,7 +1976,7 @@ function renderDetail(t, logs) {
   var tlHtml = logs.map(function(l){
     var ts = new Date(l.Timestamp||l.timestamp).toLocaleString('th-TH',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'});
     var note = l.Note || l.note || '';
-    var who  = l.EmpID || l.empId || '';
+    var who  = l.EmpName || l.empName || l.EmpID || l.empId || '';
     return '<div class="tl-item"><div class="tl-dot done"></div>' +
       '<div class="tl-text">'+note+'</div>' +
       '<div class="tl-time">'+ts+' — '+who+'</div></div>';
