@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -1375,7 +1376,7 @@ function initDB() { /* ไม่ใช้ใน GAS mode */ }
 // STATE
 // ================================================================
 var CU = null;
-var prevScreen = "";
+var screenHistory = [];  // ← History stack แทน prevScreen ตัวเดียว
 var techTab    = "open";
 var autoTimer  = null;
 var photoFiles = [null, null, null, null, null];
@@ -1388,28 +1389,48 @@ var _pStatus = null;
 // ================================================================
 // SCREEN NAV
 // ================================================================
+// ================================================================
+// SCREEN NAV — History-stack navigation
+// ================================================================
 function showScreen(id) {
-  prevScreen = (document.querySelector('.screen.active')||{}).id || "";
+  var curr = (document.querySelector('.screen.active')||{}).id || "";
+  // บันทึก screen ปัจจุบันลง history ก่อนเปลี่ยน
+  // ยกเว้น login (logout ไม่ควรถูก back กลับมาได้)
+  if (curr && curr !== 'screen-login') screenHistory.push(curr);
+  _activateScreen('screen-' + id);
+}
+
+// ── เปิด screen โดยไม่บันทึก history (ใช้ใน goBack เท่านั้น) ──
+function _activateScreen(fullId) {
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
-  var el = document.getElementById('screen-' + id);
+  var el = document.getElementById(fullId);
   if (el) { el.classList.add('active'); window.scrollTo(0,0); }
 }
-function goBack() {
-  // ── ป้องกันข้อมูลหาย: ถ้ากำลังอยู่หน้ารายละเอียดใบงาน และมีบันทึกความคืบหน้า
-  // ที่พิมพ์ไว้แต่ยังไม่ได้กด "บันทึกความคืบหน้า" ให้บันทึกอัตโนมัติก่อนออกจากหน้า
-  var activeScreen = (document.querySelector('.screen.active')||{}).id || "";
-  var progressEl = activeScreen === 'screen-detail' ? document.getElementById('inp-progress') : null;
-  var pendingNote = progressEl ? progressEl.value.trim() : '';
-  var ticketId = document.getElementById('detail-id') ? document.getElementById('detail-id').textContent : '';
 
+// ── ป้องกัน double-tap ──
+var _goingBack = false;
+function goBack() {
+  if (_goingBack) return;   // บล็อก double-tap
+  _goingBack = true;
+  setTimeout(function(){ _goingBack = false; }, 600);
+
+  // auto-save progress note ที่ยังไม่ได้กดบันทึก
+  var activeScreen = (document.querySelector('.screen.active')||{}).id || "";
+  var progressEl   = activeScreen === 'screen-detail' ? document.getElementById('inp-progress') : null;
+  var pendingNote  = progressEl ? progressEl.value.trim() : '';
+  var ticketId     = document.getElementById('detail-id') ? document.getElementById('detail-id').textContent.trim() : '';
   if (pendingNote && ticketId) {
     gasCall('updateProgress', {userJson: JSON.stringify(CU), ticketId: ticketId, newStatus: '', comment: pendingNote},
       function() { toast('✅ บันทึกความคืบหน้าที่ค้างไว้ให้อัตโนมัติแล้ว'); },
-      function() {}
+      function() {},
+      { silent: true }
     );
   }
 
-  if (prevScreen) showScreen(prevScreen.replace('screen-',''));
+  // Pop จาก history stack โดยไม่เรียก showScreen (ป้องกัน push ซ้ำ)
+  if (screenHistory.length > 0) {
+    _activateScreen(screenHistory.pop());
+  }
 }
 
 // ── Toast ──
@@ -1600,6 +1621,7 @@ function checkShiftExpiryFromServer() {
 }
 
 function doLogout() {
+  screenHistory = [];  // เคลียร์ history เมื่อ logout
   clearInterval(autoTimer);
   stopNotifyPolling();
   stopStaffPolling();
